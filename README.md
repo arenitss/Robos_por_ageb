@@ -9,4 +9,4 @@ Predicción de número de robos de vehículos por ageb en la Ciudad de México
 | José Luis Roberto Zárate Cortés | 183347   | jzaratec@itam.mx        | [jlrzarcor](https://github.com/jlrzarcor)     
 
 ## El modelo
-![](imagenes/Modelo.png)
+![](images/Modelo.png)
