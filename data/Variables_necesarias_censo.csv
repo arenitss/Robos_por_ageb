@@ -1,0 +1,42 @@
+POBTOT,Población tota
+P_15A17,Población de 15 a 17 años
+P_18A24,Población de 18 a 24 años
+P_15A17_M,Hombres de 15 a 17 años de edad
+P_18A24_M,Hombres de 18 a 24 años de edad.
+P_15A17_F,Población femenina de 15 a 17 años
+P_18A24_F,Población femenina de 18 a 24 años
+PNACOE,Población nacida en otra entidad
+P15A17A,Población de 15 a 17 años que asiste a la escuela
+P15A17A_F,Población femenina de 15 a 17 años que asiste a la escuela
+P15A17A_M,Hombres de 15 a 17 años de edad que van a la escuela
+P18A24A,Personas de 18 a 24 años de edad que van a la escuela.
+P18A24A_F,Mujeres de 18 a 24 años de edad que van a la escuela.
+P18A24A_M,Hombres de 18 a 24 años de edad que van a la escuela
+GRAPROES,Resultado de dividir el monto de grados escolares aprobados por las personas de 15 a 130 años de edad entre las personas del mismo grupo de edad. Excluye a las personas que no especificaron los grados aprobados.
+GRAPROES_F,Resultado de dividir el monto de grados escolares aprobados por las mujeres de 15 a 130 años de edad entre las mujeres del mismo grupo de edad. Excluye a las mujeres que no especificaron los grados aprobados.
+GRAPROES_M,Resultado de dividir el monto de grados escolares aprobados por los hombres de 15 a 130 años de edad entre los hombres del mismo grupo de edad. Excluye a los hombres que no especificaron los grados aprobados.
+PEA,"Personas de 12 a 130 años de edad que trabajaron, tenían trabajo pero no trabajaron o buscaron trabajo en la semana de referencia."
+PEA_F,"Mujeres de 12 a 130 años de edad que trabajaron, tenían trabajo pero no trabajaron o buscaron trabajo en la semana de referencia."
+PEA_M,"Hombres de 12 a 130 años de edad que trabajaron, tenían trabajo pero no trabajaron o buscaron trabajo en la semana de referencia."
+POCUPADA,"Personas de 12 a 130 años de edad que trabajaron o que no trabajaron, pero sí tenían trabajo en la semana de referencia."
+POCUPADA_F,"Mujeres de 12 a 130 años de edad que trabajaron o que no trabajaron, pero sí tenían trabajo en la semana de referencia."
+POCUPADA_M,"Hombres de 12 a 130 años de edad que trabajaron o que no trabajaron, pero sí tenían trabajo en la semana de referencia."
+PDESOCUP,"Personas de 12 a 130 años de edad que no tenían trabajo, pero buscaron trabajo en la semana de referencia"
+PDESOCUP_F,"Mujeres de 12 a 130 años de edad que no tenían trabajo, pero buscaron trabajo en la semana de referencia"
+PDESOCUP_M,"Hombres de 12 a 130 años de edad que no tenían trabajo, pero buscaron trabajo en la semana de referencia"
+PSINDER,Total de personas que no están afiliadas a servicios médicos en ninguna institución pública o privada
+TOTHOG,Hogares en viviendas particulares habitadas. Se considera un hogar en cada vivienda particular. Incluye casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea de un edificio; local no construido para habitación; vivienda móvil; refugio y no especificado de vivienda particular.
+HOGJEF_F,Hogares en viviendas particulares habitadas donde la persona de referencia es mujer. Se considera un hogar en cada vivienda particular. Incluye casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea; local no construido para habitación; vivienda móvil; refugio y no especificado de vivienda particular.
+POBHOG,Personas en hogares censales. Se considera un hogar en cada vivienda particular. Incluye casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea; local no construido para habitación; vivienda móvil; refugio y no especificado de vivienda particular.
+PHOGJEF_F,Personas en hogares censales donde la persona de referencia es mujer. Se considera un hogar en cada vivienda particular. Incluye casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea; local no construido para habitación; vivienda móvil; refugio y no especificado de vivienda particular.
+VIVTOT,"Viviendas particulares habitadas, deshabitadas, de uso temporal y colectivas. Incluye a las viviendas sin información de ocupantes"
+TVIVHAB,Viviendas particulares y colectivas habitadas. Incluye a las viviendas sin información de ocupantes
+TVIVPARHAB,"Viviendas particulares habitadas de cualquier clase: casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea de un edificio; local no construido para habitación, vivienda móvil; refugio y no especificado de vivienda particular. Incluye a las viviendas particulares sin información de ocupantes."
+VIVPAR_DES,Viviendas particulares deshabitadas.
+PRO_OCUP_C,"Resultado de dividir el número de personas que residen en viviendas particulares habitadas entre el número de cuartos de esas viviendas. Comprende las viviendas particulares para las que se captaron las características de la vivienda, clasificadas como: casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea de un edificio y no especificado de vivienda particular. Incluye a las viviendas particulares sin información de ocupantes."
+VPH_PISOTI,"Viviendas particulares habitadas con piso de tierra. Comprende las viviendas particulares para las que se captaron las características de la vivienda, clasificadas como: casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea de un edificio y no especificado de vivienda particular. Incluye a las viviendas particulares sin información de ocupantes."
+VPH_S_ELEC,"Viviendas particulares habitadas que no tienen energía eléctrica. Comprende las viviendas particulares para las que se captaron las características de la vivienda, clasificadas como: casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea de un edificio y no especificado de vivienda particular. Incluye a las viviendas particulares sin información de ocupantes"
+VPH_AGUAFV,"Viviendas particulares habitadas que no tienen disponibilidad de agua entubada. Comprende las viviendas particulares para las que se captaron las características de la vivienda, clasificadas como: casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea de un edificio y no especificado de vivienda particular. Incluye a las viviendas particulares sin información de ocupantes."
+VPH_NODREN,"Viviendas particulares habitadas que no tienen drenaje. Comprende las viviendas particulares para las que se captaron las características de la vivienda, clasificadas como: casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea de un edificio y no especificado de vivienda particular. Incluye a las viviendas particulares sin información de ocupantes."
+VPH_NDEAED,"Viviendas particulares habitadas que no tienen energía eléctrica, agua entubada ni drenaje. Comprende las viviendas particulares para las que se captaron las características de la vivienda, clasificadas como: casa única en el terreno; casa que comparte terreno con otra(s); casa dúplex; departamento en edificio; vivienda en vecindad o cuartería; vivienda en cuarto de azotea de un edificio y no especificado de vivienda particular. Incluye a las viviendas particulares sin información de ocupantes"
+VPH_INTER,Viviendas particulares que disponen de internet
