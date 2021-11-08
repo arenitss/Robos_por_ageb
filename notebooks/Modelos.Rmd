@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 install.packages(c("tensorflow", "keras", "tidyverse", 
                    "tidymodels", "glmnet", "kknn"))
 ```
+
 ```{r}
 library(tensorflow)
 library(keras)
@@ -20,52 +21,43 @@ library(glmnet)
 library(kknn)
 library(dplyr)
 ```
+Descargamos base de datos
 ```{r}
-base <- read_csv("ma/data/ageb_censo_delitos_wifi.csv")
+ageb_censo_delitos_wifi <- read_csv("ma/data/ageb_censo_delitos_wifi.csv")
+
+```
+Cambiamos nas con 0
+```{r}
+ageb_censo_delitos_wifi[is.na(ageb_censo_delitos_wifi)] <- 0
+```
+
+```{r}
+glimpse(ageb_censo_delitos_wifi)
+```
+
+```{r}
+ageb_censo_delitos_wifi<- ageb_censo_delitos_wifi[-1]
+```
+
+```{r}
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% 
+  relocate(Robo_Vehículos)
 
 ```
 
 ```{r}
-base[is.na(base)] <- 0
+glimpse(ageb_censo_delitos_wifi)
 ```
 
-
-
-
-
+Epezamos EDA
+Análisis bivariado
 ```{r}
-cor(base %>% select(POBTOT, VIVTOT, TVIVHAB)) %>%
-  round(2)
-```
-```{r}
-for column in ageb_censo[["P_15A17","P_18A24",
-                        "P_15A17_M", "P_18A24_M","P_15A17_F", "P_18A24_F", "PNACOE",
-                        "P15YM_AN", "P15A17A", "P15A17A_F", "P15A17A_M", "P18A24A",
-                        "P18A24A_F","P18A24A_M", "GRAPROES","GRAPROES_F","GRAPROES_M", "PEA",
-                        "PEA_F","PEA_M", "POCUPADA", "POCUPADA_F", "POCUPADA_M","PDESOCUP",
-                        "PDESOCUP_F", "PDESOCUP_M", "TOTHOG", "HOGJEF_F","POBHOG", "PHOGJEF_F",
-                        "TVIVPARHAB", "VIVPAR_DES", "PRO_OCUP_C", "VPH_INTER","PSINDER",
-                        "VPH_PISOTI","VPH_S_ELEC","VPH_AGUAFV","VPH_NODREN"]]:
-```
+many_scatter_plots <- ManyPlots(df = dplyr::select_if(ageb_censo_delitos_wifi, is.numeric),tipo_grafica = ScatterPlot)
+many_scatter_plots
 
-```{r}
-pop_15_24  pop_15_24_H
-```
-
-```{r}
-typeof(base$Robo_Vehículos)
-```
-```{r}
-typeof(base$POBTOT)
-
-```
-```{r}
-cor(base$Robo_Vehículos,base$POBTOT)
 ```
 
 
-```{r}
-cor(base %>% select(Robo_Vehículos,Amenzas)) %>%
-  round(2)
-```
+
+
 
