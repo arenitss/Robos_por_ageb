@@ -1,0 +1,71 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages(c("tensorflow", "keras", "tidyverse", 
+                   "tidymodels", "glmnet", "kknn"))
+```
+```{r}
+library(tensorflow)
+library(keras)
+library(tidyverse) 
+library(tidymodels) 
+library(glmnet)
+library(kknn)
+library(dplyr)
+```
+```{r}
+base <- read_csv("ma/data/ageb_censo_delitos_wifi.csv")
+
+```
+
+```{r}
+base[is.na(base)] <- 0
+```
+
+
+
+
+
+```{r}
+cor(base %>% select(POBTOT, VIVTOT, TVIVHAB)) %>%
+  round(2)
+```
+```{r}
+for column in ageb_censo[["P_15A17","P_18A24",
+                        "P_15A17_M", "P_18A24_M","P_15A17_F", "P_18A24_F", "PNACOE",
+                        "P15YM_AN", "P15A17A", "P15A17A_F", "P15A17A_M", "P18A24A",
+                        "P18A24A_F","P18A24A_M", "GRAPROES","GRAPROES_F","GRAPROES_M", "PEA",
+                        "PEA_F","PEA_M", "POCUPADA", "POCUPADA_F", "POCUPADA_M","PDESOCUP",
+                        "PDESOCUP_F", "PDESOCUP_M", "TOTHOG", "HOGJEF_F","POBHOG", "PHOGJEF_F",
+                        "TVIVPARHAB", "VIVPAR_DES", "PRO_OCUP_C", "VPH_INTER","PSINDER",
+                        "VPH_PISOTI","VPH_S_ELEC","VPH_AGUAFV","VPH_NODREN"]]:
+```
+
+```{r}
+pop_15_24  pop_15_24_H
+```
+
+```{r}
+typeof(base$Robo_Vehículos)
+```
+```{r}
+typeof(base$POBTOT)
+
+```
+```{r}
+cor(base$Robo_Vehículos,base$POBTOT)
+```
+
+
+```{r}
+cor(base %>% select(Robo_Vehículos,Amenzas)) %>%
+  round(2)
+```
+
