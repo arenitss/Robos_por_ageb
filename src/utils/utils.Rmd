@@ -1,0 +1,63 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+#Funciones análisis Bivariado 
+
+```{r}
+ScatterPlot <- function(df, x, y) {
+  # Input: 
+  #     df: un data frame
+  #     x: una columna de la base en forma de vector
+  #     y: una columna de la base en forma de vector
+  #
+  # Output:
+  #     un scatter plot
+  
+  ggplot(data = df, aes(x = get(x), y = get(y))) +
+    geom_point() +
+    xlab(x) +
+    ylab(y) +
+    labs(title = paste0(y, "en relación con ", x))
+}
+
+LoessPlot <- function(df, x, y) {
+  # Input: 
+  #     df: un data frame
+  #     x:  una columna de la base en forma de vector
+  #     y:  una columna de la base en forma de vector
+  #
+  # Output:
+  #     un loess plot
+  
+  ggplot(data = df, aes(x = get(x), y = get(y))) +
+    geom_point() +
+    xlab(x) +
+    ylab(y) +
+    geom_smooth(formula = "y~x",aes(x = get(x), y = get(y)) , method="lm")
+}
+
+
+ManyPlots <- function(df,tipo_grafica) {
+  # Input: 
+  #     df: un data frame
+  #     tipo_grafica: el tipo de grafica que se realizara
+  #
+  # Output:
+  #     lista de combinaciones para ggplot
+  
+  
+  colnames(df) %>%
+    map(.f = function(i) 
+      map(.x = colnames(df), .f = function(j)
+        tipo_grafica(df = df, x = i, y = j)) %>%
+        purrr::set_names(nm = paste0(colnames(df)
+                                     , " explicado por "
+                                     , i))) %>%
+    purrr::set_names(nm = colnames(df))
+}
+
+```
+
+
