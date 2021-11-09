@@ -1,0 +1,113 @@
+---
+title: "workflow2"
+output: html_document
+---
+
+---
+title: "workflow"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidymodels)
+library(tidyverse)
+library(dplyr)
+library(glmnet)
+```
+
+```{r}
+#hotel_cr_train = read.csv("entrena.csv") %>% mutate(is_canceled = factor(is_canceled),
+#                                                    hotel = factor(hotel),
+#                                                    country = factor(country)) 
+#hotel_cr_test = read.csv("prueba.csv") %>% mutate(hotel = factor(hotel),
+#                                                  country = factor(country))
+
+
+#features <- c("is_canceled","hotel","lead_time","country")
+#hotel_cr_train <- hotel_cr_train[ , (names(hotel_cr_train) %in% features)]
+#hotel_cr_test <- hotel_cr_test[ , (names(hotel_cr_test) %in% features)]
+```
+
+```{r}
+# usamos muestreo estratificado para tener el mismo balance
+# de is_canceled en entrenamiento y prueba
+hotels_split = initial_split(hotel_cr_train, strata = is_canceled, prop = 0.7)
+#hotels_split
+hotels_train <- training(hotels_split)
+```
+
+```{r}
+# preparacion de datos
+hotels_receta <- recipe(is_canceled ~ . , hotels_train) |>
+  step_dummy(all_nominal(), -is_canceled) |>
+  step_relevel(is_canceled,  ref_level = "cancelado", skip = TRUE) 
+
+# modelos
+modelo_logistico <- 
+  logistic_reg(mixture = tune(), penalty = tune()) |> 
+  set_args(lambda.min_ratio = 1e-18) |> 
+  set_engine("glmnet")
+flujo_hotel <- workflow() |> 
+  add_recipe(hotels_receta) |> 
+  add_model(modelo_logistico)
+```
+
+```{r}
+val_split <- manual_rset(hotels_split |> list(), "validación")
+# hacemos un grid de valores de mezcla y penalización
+params <- parameters(penalty(range = c(-5, 2), trans = log10_trans()),
+                            mixture(range = c(0, 1)))
+grid <- grid_regular(params, levels = c(penalty = 20, mixture = 5))
+```
+
+```{r}
+mis_metricas <- metric_set(mn_log_loss)
+eval_tbl <- tune_grid(flujo_hotel,
+                      resamples = val_split,
+                      grid = grid,
+                      metrics = mis_metricas) 
+ajustes_tbl <- eval_tbl |>
+  unnest(cols = c(.metrics)) |> 
+  select(id, mixture, penalty, .metric, .estimate)
+ajustes_tbl
+```
+
+```{r}
+ggplot(ajustes_tbl, aes(x = penalty, y = .estimate, colour = mixture, group = mixture)) +
+  geom_point() + geom_line() + scale_x_log10()
+```
+```{r}
+mejor_modelo <- select_best(eval_tbl)
+mejor_modelo
+```
+
+```{r}
+hotels_prueba <- testing(hotels_split)
+modelo_final <- finalize_workflow(flujo_hotel, mejor_modelo) |> 
+  fit(hotels_prueba)
+```
+
+```{r}
+hotels_prueba <- testing(hotels_split)
+pred_probas <- predict(modelo_final, hotels_prueba, type="prob") 
+head(pred_probas)
+```
+
+```{r}
+csv = pred_probas %>% mutate(etiqueta = ifelse(.pred_cancelado > 0.5, 1, 0))
+csv$etiqueta %>% mean()
+```
+
+```{r}
+probs = data.frame(id = seq(1:length(csv$.pred_cancelado)), prob = csv$.pred_cancelado)
+names(probs) = c("id","prob")
+write.csv(probs, file="probs.csv",row.names = FALSE)
+```
+
+
+
+
