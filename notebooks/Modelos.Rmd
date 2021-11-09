@@ -46,6 +46,13 @@ ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
 ```
 
 ```{r}
+ageb_censo_delitos_wifi<- ageb_censo_delitos_wifi %>%
+  mutate(P15A24A = P15A17A + P18A24A)
+```
+
+
+
+```{r}
 glimpse(ageb_censo_delitos_wifi)
 ```
 
@@ -58,6 +65,62 @@ many_scatter_plots
 ```
 
 
+```{r}
+many_loess_plots <- ManyPlots(df = dplyr::select_if(ageb_censo_delitos_wifi,
+is.numeric),tipo_grafica = LoessPlot)
+many_loess_plots
+```
 
+## MODELO
+
+
+```{r}
+set.seed(823)
+robos_split <- initial_split(ageb_censo_delitos_wifi, prop = 0.25) 
+robos_entrena <- training(robos_split)
+```
+
+
+```{r}
+robos_receta <- recipe(Robo_Vehículos ~ pop_15_24 + P15YM_AN+ P15A24A +GRAPROES+
+ PEA + POCUPADA + PDESOCUP+ PSINDER+ PHOGJEF_F + VIVPAR_DES +
+ PRO_OCUP_C+ VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + VPH_NODREN + VPH_INTER + Amenzas +Fraude + Robo_Objetos + Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos+ Robo_Negocio_Sin_Violencia_Autoservicio  +
+Robo_Negocio_Sin_Violencia + Narcomenudeo + Robo_Casa_Sin_Violencia +
+Postes_Wifi, robos_entrena)
+```
+
+
+```{r}
+modelo_penalizado <- linear_reg(mixture = 0.0, penalty = tune()) %>%
+  set_engine("glmnet", lambda.min.ratio = 1e-30)
+flujo_robos <- workflow() %>% 
+  add_recipe(robos_receta) %>% 
+  add_model(modelo_penalizado)
+```
+
+
+```{r}
+val_split <- manual_rset(robos_split %>% list(), "validación")
+lambda_params <- parameters(penalty(range = c(-3, 3), 
+                                    trans = log10_trans()))
+lambda_grid <- grid_regular(lambda_params, levels = 20)
+lambda_grid
+```
+
+```{r}
+mis_metricas <- metric_set(rmse)
+eval_tbl <- tune_grid(flujo_robos,
+                      resamples = val_split,
+                      grid = lambda_grid,
+                      metrics = mis_metricas) 
+
+```
+
+```{r}
+ajustes_tbl <- eval_tbl %>%
+  unnest(cols = c(.metrics)) %>%
+  select(id, mixture, penalty, .metric, .estimate)
+ajustes_tbl
+```
 
 
