@@ -6,6 +6,50 @@ output: html_notebook
 #Funciones análisis Bivariado 
 
 ```{r}
+
+#Imputación valores centrales
+moda <- function(x) {
+  # Función para obetener la moda de variable categorica
+  # Inputs:
+  # x: columna de donde se quiere extraer la moda
+  # 
+  # Outputs
+  # Moda de columna, es decir el valor que más se repite
+  z <- table(as.vector(x))
+  names(z)[z == max(z)]
+}
+
+imputar_valor_central <- function(data, colnames) {
+  # Función para imputar valores centrales, media en numéricos y moda en categoricos 
+  # Inputs:
+  # data - El tibble de algas
+  # colnames - El array de las columnas que se desea imputar
+  # 
+  # Outputs
+  # dataframe con imputaciones centrales
+  
+  #Dividir entre numericas y categoricas
+  data_columnas <- data[colnames]
+  var_numericas <- dplyr::select_if(data_columnas, is.numeric) %>% names()
+  var_categoricas <- dplyr::select_if(data_columnas, is.character) %>% colnames()
+  
+  #Imputar
+  algas_data_imputacion_central  <-
+    data.frame(data) %>%
+    # variables numéricas (media)
+    mutate_at(
+      vars(var_numericas),
+      funs(ifelse(is.na(.), median(., na.rm = T), .))) %>%
+    # variables categóricas (moda)
+    mutate_at(
+      vars(var_categoricas),
+      funs(as.ordered(ifelse(is.na(.), moda(.), as.character(.)))))
+  
+  return(algas_data_imputacion_central)
+  
+  
+}
+
 ScatterPlot <- function(df, x, y) {
   # Input: 
   #     df: un data frame
