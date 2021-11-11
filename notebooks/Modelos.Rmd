@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 install.packages(c("tensorflow", "keras", "tidyverse", 
-                   "tidymodels", "glmnet", "kknn"))
+                   "tidymodels", "glmnet", "kknn","gt" ))
 ```
 
 ```{r}
@@ -20,43 +20,82 @@ library(tidymodels)
 library(glmnet)
 library(kknn)
 library(dplyr)
+library(gt)
 ```
 Descargamos base de datos
 ```{r}
-ageb_censo_delitos_wifi <- read_csv("ma/data/ageb_censo_delitos_wifi.csv")
+ageb_censo_delitos_wifi <- read_csv("cursos/data/ageb_censo_delitos_wifi.csv")
 
 ```
-Cambiamos nas con 0
-```{r}
-ageb_censo_delitos_wifi[is.na(ageb_censo_delitos_wifi)] <- 0
-```
 
+### LIMPIEZA
 ```{r}
 glimpse(ageb_censo_delitos_wifi)
 ```
-
+Reemplazamos con 0 los nas de las columnas de delitos, porque na significa que no hubo delitos en esa ageb
 ```{r}
-ageb_censo_delitos_wifi<- ageb_censo_delitos_wifi[-1]
+for (i in 54:65){
+  ageb_censo_delitos_wifi[which(is.na(ageb_censo_delitos_wifi[,i])),i] = 0
+}
 ```
 
-```{r}
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% 
-  relocate(Robo_Vehículos)
-
-```
-
+Creamos la variable de poblacion que entre 15 y 24 años que no asiste a la escuela que faltaba
 ```{r}
 ageb_censo_delitos_wifi<- ageb_censo_delitos_wifi %>%
   mutate(P15A24A = P15A17A + P18A24A)
 ```
 
 
+Quitamos la primera columna que es el indice
+```{r}
+ageb_censo_delitos_wifi<- ageb_censo_delitos_wifi[-1]
+```
+
+Pasamos Robo de vehículos al inicio de la base
+```{r}
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% 
+  relocate(Robo_Vehículos)
+
+```
+
+
+Imputamos con la mediana los nas del resto de las columnas
+
+```{r}
+#columnas que se desea imputar valores centrales
+col_valor_central <- c(10:53,65)
+#imputacion por valor central
+ageb_censo_delitos_wifi <- imputar_valor_central(data.frame(ageb_censo_delitos_wifi), col_valor_central)
+
+```
 
 ```{r}
 glimpse(ageb_censo_delitos_wifi)
 ```
 
-Epezamos EDA
+```{r}
+summary(ageb_censo_delitos_wifi)
+```
+Estandarizamos columnas
+```{r}
+
+for (i in 10:65){
+  ageb_censo_delitos_wifi[,i] <- (ageb_censo_delitos_wifi[,i] - mean(ageb_censo_delitos_wifi[,i])) / sd(ageb_censo_delitos_wifi[,i])
+}
+```
+
+
+```{r}
+ageb_censo_delitos_wifi$Robo_Vehículos <- (ageb_censo_delitos_wifi$Robo_Vehículos - mean(ageb_censo_delitos_wifi$Robo_Vehículos)) / sd(ageb_censo_delitos_wifi$Robo_Vehículos)
+```
+
+
+```{r}
+summary(ageb_censo_delitos_wifi)
+```
+
+
+## EDA
 Análisis bivariado
 ```{r}
 many_scatter_plots <- ManyPlots(df = dplyr::select_if(ageb_censo_delitos_wifi, is.numeric),tipo_grafica = ScatterPlot)
@@ -75,9 +114,10 @@ many_loess_plots
 
 
 ```{r}
-set.seed(823)
-robos_split <- initial_split(ageb_censo_delitos_wifi, prop = 0.25) 
+set.seed(84351)
+robos_split <- initial_split(ageb_censo_delitos_wifi, prop = 0.75)
 robos_entrena <- training(robos_split)
+robos_prueba <- testing(robos_split)
 ```
 
 
@@ -89,38 +129,131 @@ Robo_Negocio_Sin_Violencia + Narcomenudeo + Robo_Casa_Sin_Violencia +
 Postes_Wifi, robos_entrena)
 ```
 
-
 ```{r}
-modelo_penalizado <- linear_reg(mixture = 0.0, penalty = tune()) %>%
-  set_engine("glmnet", lambda.min.ratio = 1e-30)
+modelo_penalizado <- linear_reg(mixture = tune(), penalty = tune()) %>%
+  set_args(lambda.min_ratio = 1e-18) %>%
+  set_engine("glmnet")  
 flujo_robos <- workflow() %>% 
   add_recipe(robos_receta) %>% 
   add_model(modelo_penalizado)
 ```
 
-
 ```{r}
 val_split <- manual_rset(robos_split %>% list(), "validación")
-lambda_params <- parameters(penalty(range = c(-3, 3), 
-                                    trans = log10_trans()))
-lambda_grid <- grid_regular(lambda_params, levels = 20)
-lambda_grid
+# hacemos un grid de valores de mezcla y penalización
+params <- parameters(penalty(range = c(-5, 2), trans = log10_trans()),
+                            mixture(range = c(0, 1)))
+grid <- grid_regular(params, levels = c(penalty = 20, mixture = 5))
+grid
 ```
 
 ```{r}
 mis_metricas <- metric_set(rmse)
 eval_tbl <- tune_grid(flujo_robos,
                       resamples = val_split,
-                      grid = lambda_grid,
+                      grid = grid,
                       metrics = mis_metricas) 
-
 ```
 
 ```{r}
 ajustes_tbl <- eval_tbl %>%
-  unnest(cols = c(.metrics)) %>%
+  unnest(cols = c(.metrics)) %>% 
   select(id, mixture, penalty, .metric, .estimate)
 ajustes_tbl
 ```
 
+
+```{r}
+ggplot(ajustes_tbl, aes(x = penalty, y = .estimate, colour = mixture, group = mixture)) +
+  geom_point() + geom_line() + scale_x_log10()
+```
+
+```{r}
+mejor_modelo <- select_best(eval_tbl)
+mejor_modelo
+```
+
+```{r}
+modelo_final <- finalize_workflow(flujo_robos, mejor_modelo) %>%
+  fit(robos_entrena)
+
+```
+
+```{r}
+robos_receta_2 <- recipe(Robo_Vehículos ~ pop_15_24 + P15YM_AN+ P15A24A +GRAPROES+
+ PEA + POCUPADA + PDESOCUP+ PSINDER+ PHOGJEF_F + VIVPAR_DES +
+ PRO_OCUP_C+ VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + VPH_NODREN + VPH_INTER + Amenzas +Fraude + Robo_Objetos + Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos+ Robo_Negocio_Sin_Violencia_Autoservicio  +
+Robo_Negocio_Sin_Violencia + Narcomenudeo + Robo_Casa_Sin_Violencia +
+Postes_Wifi, robos_entrena)
+
+```
+
+
+
+```{r}
+modelo_penalizado_2 <- linear_reg(mixture = 0, penalty = .6158482) %>%
+  set_args(lambda.min_ratio = 1e-18) %>%
+  set_engine("glmnet")  
+flujo_robos_2 <- workflow() %>% 
+  add_recipe(robos_receta_2) %>% 
+  add_model(modelo_penalizado_2)
+```
+
+
+```{r}
+ajuste <- fit(flujo_robos_2, robos_entrena)
+```
+
+
+```{r}
+metricas <- metric_set(mape, mae, rmse, rsq)
+```
+
+```{r}
+robos_prueba_normal <- testing(robos_split) 
+```
+
+
+```{r}
+metricas(robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal)), 
+     truth = Robo_Vehículos, estimate = .pred) 
+  #gt() %>% fmt_number(.estimate, decimals = 2)
+```
+
+```{r}
+robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal)) %>%
+  ggplot(aes(x = .pred, y = Robo_Vehículos)) + geom_abline() + 
+    geom_point(colour = "red") + coord_obs_pred()
+```
+```{r}
+ajuste %>% pull_workflow_fit() %>% broom::tidy() %>% 
+  mutate(across(where(is.numeric), round, 3)) %>%
+  select(term, estimate) %>% 
+  gt()
+```
+```{r}
+regresion = lm(Robo_Vehículos ~ pop_15_24 + P15YM_AN+ P15A24A +GRAPROES+
+ PEA + POCUPADA + PDESOCUP+ PSINDER+ PHOGJEF_F + VIVPAR_DES +
+ PRO_OCUP_C+ VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + VPH_NODREN + VPH_INTER + Amenzas +Fraude + Robo_Objetos + Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos+ Robo_Negocio_Sin_Violencia_Autoservicio  +
+Robo_Negocio_Sin_Violencia + Narcomenudeo + Robo_Casa_Sin_Violencia +
+Postes_Wifi, robos_entrena) #Create the linear regression
+summary(regresion) #Review the results
+
+```
+### IMPORTANCIA
+
+```{r}
+rf <- ranger(Robo_Vehículos ~ pop_15_24 + P15YM_AN + P15A24A + 
+    GRAPROES + PEA + POCUPADA + PDESOCUP + PSINDER + PHOGJEF_F + 
+    VIVPAR_DES + PRO_OCUP_C + VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + 
+    VPH_NODREN + VPH_INTER + Amenzas + Fraude + Robo_Objetos + 
+    Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos + 
+    Robo_Negocio_Sin_Violencia_Autoservicio + Robo_Negocio_Sin_Violencia + 
+    Narcomenudeo + Robo_Casa_Sin_Violencia + Postes_Wifi, data = robos_entrena, importance = "permutation")
+```
+
+```{r}
+importance(rf)->importancia
+sort(importancia,decreasing = TRUE)
+```
 
