@@ -1,11 +1,48 @@
 ---
-title: "Untitled"
+title: "EDA. Incidencia Delictiva por AGEB"
+author: "A_NAYELLI XXX, R_URIEL ABRAHAM XXX, ZC_JOSE LUIS R. 183347"
+date: "06/11/2021"
 output: html_document
 ---
 
 ```{r}
-install.packages(c("tensorflow", "keras", "tidyverse", 
-                   "tidymodels", "glmnet", "kknn","gt" ))
+knitr::opts_chunk$set(echo = FALSE)
+
+
+## ID_F0 --> This function aim to install and load libraries required.
+rm(list = ls())
+
+instalar <- function(paquete) {
+  if (!require(paquete,character.only = TRUE, quietly = TRUE,
+               warn.conflicts = FALSE)) {
+    install.packages(as.character(paquete), dependecies = TRUE,
+                     repos = "http://cran.us.r-project.org")
+    library(paquete, character.only = TRUE, quietly = TRUE,
+            warn.conflicts = FALSE)
+  }
+}
+    
+## Defining required libraries to install and load:
+## Use this vector to indicate libraries to load.
+paquetes <- c("tensorflow", "keras", "tidyverse",
+              "tidymodels", "glmnet", "kknn","gt","ranger")
+
+#paquetes <- c('readr', 'tidyr', 'tibble', 'dplyr', 'magrittr', 'lubridate',
+#              'stringr','ggplot2', 'forcats', "gridExtra", 'ggthemes',
+#              'GGally','mice','VIM')
+
+lapply(paquetes, instalar)
+
+## Load piping files and review of working libraries
+#source("../src/etl/metadata.R"  , encoding = 'UTF-8')
+source("../src/utils/utils.R", encoding = 'UTF-8')
+#source("../src/etl/00-load.R", encoding = 'UTF-8')
+#source("../src/etl/01-prepare.R", encoding = 'UTF-8')
+#ource("../src/etl/02-clean.R", encoding = 'UTF-8')
+#source("../src/etl/03-eda.R", encoding = 'UTF-8')
+#source("../src/etl/ggbiplot.R",   encoding = 'UTF-8')
+
+
 ```
 
 ```{r}
@@ -20,7 +57,7 @@ library(gt)
 ```
 Descargamos base de datos
 ```{r}
-ageb_censo_delitos_wifi <- read_csv("cursos/data/ageb_censo_delitos_wifi.csv")
+ageb_censo_delitos_wifi <- read_csv("../data/ageb_censo_delitos_wifi.csv")
 
 ```
 
@@ -320,10 +357,10 @@ summary(regresion) #Review the results
 ### IMPORTANCIA
 
 ```{r}
-install.packages("ranger")
+
 ```
 ```{r}
-library(ranger)
+
 ```
 
 
@@ -350,6 +387,7 @@ unique(ageb_censo_delitos_wifi$NOM_MUN)
 ```{r}
 glimpse(ageb_censo_delitos_wifi)
 ```
+
 Cambiamos de doble to character
 ```{r}
 ageb_censo_delitos_wifi$union_tepito <- as.character(ageb_censo_delitos_wifi$union_tepito)
