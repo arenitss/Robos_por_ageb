@@ -90,6 +90,87 @@ ageb_censo_delitos_wifi$Robo_Vehículos <- (ageb_censo_delitos_wifi$Robo_Vehícu
 summary(ageb_censo_delitos_wifi)
 ```
 
+### Modelos con dummies y con bandas
+https://www.elfinanciero.com.mx/nacional/40-bandas-se-disputan-la-cdmx/
+```{r}
+unique(ageb_censo_delitos_wifi$NOM_MUN)
+```
+
+Bandas
+```{r}
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(union_tepito = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
+                                                      NOM_MUN == "Azcapotzalco"|
+                                                      NOM_MUN == "Benito Ju rez"|
+                                                      NOM_MUN == "Coyoac n"|
+                                                      NOM_MUN == "Cuauht\u0082moc"|
+                                                      NOM_MUN == "Gustavo A. Madero"|
+                                                      NOM_MUN == "Iztacalco"|
+                                                      NOM_MUN == "La Magdalena Contreras"|
+                                                      NOM_MUN == "Miguel Hidalgo"|
+                                                      NOM_MUN == "Tlalpan"|
+                                                      NOM_MUN == "Venustiano Carranza", 1,0)
+                                                        )
+```
+
+```{r}
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(cjng = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
+                                                      NOM_MUN == "µlvaro Obreg¢n"|
+                                                      NOM_MUN == "Benito Ju rez"|
+                                                      NOM_MUN == "Cuajimalpa de Morelos"|
+                                                      NOM_MUN == "Cuauht\u0082moc"|
+                                                      NOM_MUN == "Gustavo A. Madero"|
+                                                      NOM_MUN == "Iztapalapa"|
+                                                      NOM_MUN == "Tlalpan", 1,0)
+                                                        )
+
+```
+
+
+```{r}
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(cartel_de_tlahuac = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
+                                                      NOM_MUN == "Tl huac"|
+                                                      NOM_MUN == "Iztapalapa"|
+                                                      NOM_MUN == "Milpa Alta"|
+                                                      NOM_MUN == "Tlalpan"|
+                                                      NOM_MUN == "Xochimilco", 1,0)
+                                                        )
+```
+
+```{r}
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(lenin_canchola = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
+                                                      NOM_MUN == "µlvaro Obreg¢n"|
+                                                      NOM_MUN == "Benito Ju rez"|
+                                                      NOM_MUN == "La Magdalena Contreras"|
+                                                      NOM_MUN == "Miguel Hidalgo"|
+                                                      NOM_MUN == "Tlalpan", 1,0)
+                                                        )
+
+```
+
+```{r}
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(anti_union_tepito = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
+                                                      NOM_MUN == "Azcapotzalco"|
+                                                      NOM_MUN == "Cuauht\u0082moc"|
+                                                      NOM_MUN == "Iztacalco"|
+                                                      NOM_MUN == "Venustiano Carranza", 1,0))
+                                                       
+
+
+```
+
+```{r}
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(rodolfos = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
+                                                      NOM_MUN == "Coyoac n"|
+                                                      NOM_MUN == "Iztacalco"|
+                                                      NOM_MUN == "Milpa Alta"|
+                                                      NOM_MUN == "Tl huac"|
+                                                      NOM_MUN == "Xochimilco", 1,0)
+                                                        )
+
+
+```
+
+
 
 ## EDA
 Análisis bivariado
@@ -259,5 +340,42 @@ rf <- ranger(Robo_Vehículos ~ pop_15_24 + P15YM_AN + P15A24A +
 ```{r}
 importance(rf)->importancia
 sort(importancia,decreasing = TRUE)
+```
+
+Modelos con dummies y con bandas
+https://www.elfinanciero.com.mx/nacional/40-bandas-se-disputan-la-cdmx/
+```{r}
+unique(ageb_censo_delitos_wifi$NOM_MUN)
+```
+```{r}
+glimpse(ageb_censo_delitos_wifi)
+```
+Cambiamos de doble to character
+```{r}
+ageb_censo_delitos_wifi$union_tepito <- as.character(ageb_censo_delitos_wifi$union_tepito)
+
+ageb_censo_delitos_wifi$cjng <- as.character(ageb_censo_delitos_wifi$cjng)
+
+ageb_censo_delitos_wifi$ cartel_de_tlahuac <- as.character(ageb_censo_delitos_wifi$ cartel_de_tlahuac)
+
+ageb_censo_delitos_wifi$ lenin_canchola <- as.character(ageb_censo_delitos_wifi$ lenin_canchola)
+
+ageb_censo_delitos_wifi$ anti_union_tepito <- as.character(ageb_censo_delitos_wifi$ anti_union_tepito)
+
+ageb_censo_delitos_wifi$rodolfos <- as.character(ageb_censo_delitos_wifi$rodolfos)
+
+
+
+```
+
+
+Bandas
+
+```{r}
+robos_receta_3 <- recipe(Robo_Vehículos ~ pop_15_24 + P15YM_AN+ P15A24A +GRAPROES+
+ PEA + POCUPADA + PDESOCUP+ PSINDER+ PHOGJEF_F + VIVPAR_DES +
+ PRO_OCUP_C+ VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + VPH_NODREN + VPH_INTER + Amenzas +Fraude + Robo_Objetos + Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos+ Robo_Negocio_Sin_Violencia_Autoservicio  +
+Robo_Negocio_Sin_Violencia + Narcomenudeo + Robo_Casa_Sin_Violencia +
+Postes_Wifi+union_tepito+cjng+cartel_de_tlahuac+lenin_canchola+anti_union_tepito+rodolfos , robos_entrena)
 ```
 
