@@ -3,10 +3,6 @@ title: "Untitled"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ```{r}
 install.packages(c("tensorflow", "keras", "tidyverse", 
                    "tidymodels", "glmnet", "kknn","gt" ))
@@ -241,6 +237,14 @@ summary(regresion) #Review the results
 
 ```
 ### IMPORTANCIA
+
+```{r}
+install.packages("ranger")
+```
+```{r}
+library(ranger)
+```
+
 
 ```{r}
 rf <- ranger(Robo_Vehículos ~ pop_15_24 + P15YM_AN + P15A24A + 
