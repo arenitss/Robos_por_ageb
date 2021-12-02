@@ -1,0 +1,54 @@
+---
+title: "Robo de Vehículos por AGEB en la Ciudad de México 2020"
+output: html_document
+---
+
+
+# "Robo de Vehículos por AGEB en la Ciudad de México 2020. Modelo de Prevención"
+
+## Modelo de Prevención 
+
+El modelo de prevención de la violencia que se toma en este proyecto es una propuesta del Lic. Guillermo Valadés Castellanos[1]. Dicho ejercicio ha sido implementado con éxito en el municipio de Nezahualcóyotl en 2015, el área metropolitana de Guadalajara en 2018 y en el estado de Tamaulipas en 2019.
+
+El modelo considera los siguientes puntos de partida:
+
+1. Sobre las causas de la delincuencia
+2. Sobre los tipos de delincuencia
+3. Sobre los tipos de prevención
+
+### Sobre las Causas de la delincuencia
+
+Existe la tesis general que sostiene que algunas situaciones sociales y económicas, como la pobreza, la desigualdad, la falta de oportunidades económicas y/o educativas, etc. son causas de la delincuencia. Sin embargo, no existe una relación causal. Pueden ser condiciones necesarias, en algunos casos, aunque no suficientes. Por lo tanto es indispensable, encontrar otras variables sociales, más concretas, que operan como factores de riesgo o detonantes de la actividad delictiva.
+
+Existen dos tipos de factores de riesgo:
+
+1. Los sociales. Que afectan directamente a los grupos sociales propensos a la comisión de delitos, por ejemplo, el nivel de violencia familiar, y 
+2. Los de contexto. Se refieren a la existencia de espacios físicos proclives para el crimen o las deficiencias de la vigilancia policial.
+
+Esto quiere decir, que las variables estructurales sociales y económicas sólo operan cuando están presentes los factores de riesgo. Por ejemplo, que un joven haya abandonado la escuela y se encuentre desempleado, no es causa suficiente para que se convierta en delincuente. Se requiere además, que sea miembro de alguna pandilla, sea víctima de violencia familiar, consuma drogas y existan factores externos que faciliten la comisión de un delito, como escasa vigilancia policíaca y alto nivel de impunidad.
+
+### Sobre los tipos de delincuencia
+
+La delincuencia puede clasificarse por tipo de actor delictivo. Existen delitos que se comenten por individuos aislados, grupos juveniles o pandillas, bandas locales y finalmente por agrupaciones del crimen organizado (carteles).
+
+
+### Tipos de prevención
+
+* Directa. Opera sobre variables inmediatas y los actores directos o potenciales.
+1. Jóvenes propensos a la comisión de delitos
+2. Delincuentes individuales o en grupo, pero no carteles
+3. Factores de riesgo
+
+* Indirecta. Sobre causas estructurales, como desigualdad social.
+
+Este modelo por tanto se centra en delitos cometidos por  individuos aislados, pandillas y bandas; se focaliza en la disminución de factores de riesgo; y debido a que sólo se cuenta con el número de carpetas de investigación reportadas por la Fiscalía de la Ciudad de México, se eligió el robo de vehículos como delito a estudiar debido a que el nivel de registros es mayor que otros delitos cuya cifra negra ronda porcentajes cercanos al 99%.
+
+Es importante mencionar, que debido a que se cuenta con información pública, únicamente, buena parte del trabajo de este proyecto es la recopilación y adecuación de las variables integradas de varias fuentes disponibles como los datos de Ciudad de México y el Instituto Nacional de Estadística y Geografía (INEGI).
+
+
+1. Guillermo Valdés Castellanos.
+* Ex director del CISEN (2007-2011)
+* Miembro del Consejo de Seguridad Nacional y del Gabinete de Seguridad Pública (2007-2011)
+* Coordinador del Grupo de Alto Nivel México-Estados Unidos en materia de cooperación para la seguridad (2007-2011)
+* Investigador de la Fundación Ortega y Gasset
+* Licenciado en Ciencias Sociales, ITAM
