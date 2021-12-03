@@ -7,13 +7,13 @@ output: html_document
 
 Las fuentes de información que se emplearon para este trabajo son las siguientes:
 
-- [Claves y Polígonos de AGEB](https://blog.diegovalle.net/shapefiles-of-mexico-agebs-manzanas-etc-es.html)
+- [Claves y Polígonos de AGEB](https://www.inegi.org.mx/app/biblioteca/ficha.html?upc=889463807469)
 
 Esta base de datos es generada por el INEGI y contiene las claves de las entidades federativas, los municipios y las localidades a la que pertenece cada AGEB; así como las coordenadas georreferenciadas que definen el polígono territorial que cubre cada AGEB.
 
 El AGEB se define como la extensión territorial que corresponde a la subdivisión de las áreas geoestadísticas municipales y, dependiendo de sus características, se clasifican en dos tipos: AGEB urbana y AGEB rural. Las AGEB urbanas corresponden al área geográfica ocupada por un conjunto de manzanas perfectamente delimitadas por calles, avenidas, andadores o cualquierotro rasgo de fácil identificación en el terreno y cuyo uso de suelo es principalmente habitacional, industrial, de servicios, comercial, entre otros, y sólo son asignados al interior de localidades urbanas. Las AGEB que no formen parte de la descripción anterior son considerardadas rurales.
 
-- [Marco Geoestadístico. Censo de Población y Vivienda 2020](https://www.inegi.org.mx/app/biblioteca/ficha.html?upc=889463807469)
+- [Marco Geoestadístico. Censo de Población y Vivienda 2020](https://www.inegi.org.mx/programas/ccpv/2020/default.html#Microdatos)
 
 Esta base de datos corresponde al Censo de Población y Vivienda realizado por el INEGI en 2020 (Censo en adelante) y, de acuerdo con la [documentación](https://www.inegi.org.mx/app/scitel/doc/descriptor/fd_agebmza_urbana_cpv2020.pdf) de la entidad, "se incluye una selección de indicadores sobre las características sociodemográficas de la población y las viviendas de las localidades urbanas del país, generados con los resultados del **Censo de Población y Vivienda 2020** desagregados hasta el nivel de área geoestadística básica (AGEB) y manzana urbana."
 
@@ -35,7 +35,7 @@ Ambas bases de datos fueron analizadas y se realizó un proceso de limpieza y tr
 
 Para la base de datos del Censo no hubo necesidad de realizar ninguna limpieza, sin embargo si se creó una nueva variable:
 
-- Se agruparon dos categorías de población en una. De modeo que los grupos de edades de 15 a 17 y de 18 a 24 se integraron en una sola categoría: de 15 a 24. Se hizo una variable con el total de la población en ese rango y otra solo para hombres en ese mismo rango de edad. Esta agrupación se realizó para capturar lo que se ha observado en estudios como la Encuesta NAcional de Victimización y Percepción sobre Sefguridad Pública (ENVIPE) donde se indica que en este rango de edad existe una concentración de población con propensión a delinquir.
+- Se agruparon dos categorías de población en una. De modeo que los grupos de edades de 15 a 17 y de 18 a 24 se integraron en una sola categoría: de 15 a 24. Se hizo una variable con el total de la población en ese rango y otra solo para hombres en ese mismo rango de edad. Esta agrupación se realizó para capturar lo que se ha observado en estudios como la Encuesta NAcional de Victimización y Percepción sobre Seguridad Pública (ENVIPE) donde se indica que en este rango de edad existe una concentración de población con propensión a delinquir.
 - Se creó una nueva variable que posteriormente se utiliza para relacionar la base de datos del Censo con las otras utilizadas
 
 Para la base de datos de Delitos:
