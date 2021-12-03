@@ -1,10 +1,9 @@
 ---
-title: "Robo de Vehículos por AGEB en la Ciudad de México 2020"
+title: "Robo de Vehículos por AGEB en la Ciudad de México 2020. Modelo de Prevención"
 output: html_document
 ---
 
 
-# "Robo de Vehículos por AGEB en la Ciudad de México 2020. Modelo de Prevención"
 
 ## Modelo de Prevención 
 
@@ -22,7 +21,7 @@ Existe la tesis general que sostiene que algunas situaciones sociales y económi
 
 Existen dos tipos de factores de riesgo:
 
-1. Los sociales. Que afectan directamente a los grupos sociales propensos a la comisión de delitos, por ejemplo, el nivel de violencia familiar, y 
+1. Los sociales. Que afectan directamente a los grupos sociales propensos a la comisión de delitos, por ejemplo, el nivel de violencia familiar
 2. Los de contexto. Se refieren a la existencia de espacios físicos proclives para el crimen o las deficiencias de la vigilancia policial.
 
 Esto quiere decir, que las variables estructurales sociales y económicas sólo operan cuando están presentes los factores de riesgo. Por ejemplo, que un joven haya abandonado la escuela y se encuentre desempleado, no es causa suficiente para que se convierta en delincuente. Se requiere además, que sea miembro de alguna pandilla, sea víctima de violencia familiar, consuma drogas y existan factores externos que faciliten la comisión de un delito, como escasa vigilancia policíaca y alto nivel de impunidad.
@@ -32,12 +31,13 @@ Esto quiere decir, que las variables estructurales sociales y económicas sólo 
 La delincuencia puede clasificarse por tipo de actor delictivo. Existen delitos que se comenten por individuos aislados, grupos juveniles o pandillas, bandas locales y finalmente por agrupaciones del crimen organizado (carteles).
 
 
-### Tipos de prevención
+### Sobre los tipos de prevención
 
 * Directa. Opera sobre variables inmediatas y los actores directos o potenciales.
-1. Jóvenes propensos a la comisión de delitos
-2. Delincuentes individuales o en grupo, pero no carteles
-3. Factores de riesgo
+
+    1. Jóvenes propensos a la comisión de delitos
+    2. Delincuentes individuales o en grupo, pero no carteles
+    3. Factores de riesgo
 
 * Indirecta. Sobre causas estructurales, como desigualdad social.
 
@@ -45,55 +45,57 @@ Este modelo por tanto se centra en delitos cometidos por individuos aislados, pa
 
 Es importante mencionar, que debido a que se cuenta con información pública, únicamente, buena parte del trabajo de este proyecto es la recopilación y adecuación de las variables integradas de varias fuentes disponibles como los datos de Ciudad de México y el Instituto Nacional de Estadística y Geografía (INEGI).
 
+
+
 ## Diagnóstico
 La base de datos está estructurada por AGEB, es decir, cada renglón contiene la información correspondiente a cada una una delas demarcaciones territoriales básicas de la Ciudad de México durante 2020.
 
 * Población delincuencial potencial y real
-1. pop_15_24. Población de 15 a 24 años (INEGI)
-2. union_tepito. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
-3. cjng. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
-4. cartel_de_tlahuac. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
-5. lenin_canchola. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
-6. anti_union_tepito. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
-7. rodolfos Alcaldía. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
+  1. pop_15_24. Población de 15 a 24 años (INEGI)
+  2. union_tepito. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
+  3. cjng. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
+  4. cartel_de_tlahuac. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
+  5. lenin_canchola. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
+  6. anti_union_tepito. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
+  7. rodolfos Alcaldía. Si la AGEB pertenece a una alcaldía donde opera dicha banda o cartel (Prensa)
 
 * Causas estructurales
-1. P15A24A. Población de 15 a 24 años que asiste a la escuela (INEGI)
-2. GRAPROES. Resultado de dividir el monto de grados escolares aprobados por las personas de 15 a 130 años de edad entre las personas del mismo grupo de edad (INEGI)
-3.. PEA. Personas de 12 a 130 años de edad que trabajaron, tenían trabajo pero no trabajaron o buscaron trabajo en la semana de referencia (INEGI)
-4.. POCUPADA. Personas de 12 a 130 años de edad que trabajaron o que no trabajaron, pero sí tenían trabajo en la semana de referencia (INEGI)
-5. PDESOCUP. Personas de 12 a 130 años de edad que no tenían trabajo, pero buscaron trabajo en la semana de referencia (INEGI)
-6. PSINDER. Total de personas que no están afiliadas a servicios médicos en ninguna institución pública o privada (INEGI)
-7. PRO_OCUP_C. Resultado de dividir el número de personas que residen en viviendas particulares habitadas entre el número de cuartos de esas viviendas (INEGI)
-8 .VPH_PISOTI. Viviendas particulares habitadas con piso de tierra (INEGI)
-9. VPH_S_ELEC. Viviendas particulares habitadas que no tienen energía eléctrica (INEGI)
-10.VPH_AGUAFV. Viviendas particulares habitadas que no tienen disponibilidad de agua entubada (INEGI)
-11. VPH_NODREN. Viviendas particulares habitadas que no tienen drenaje (INEGI)
-12.VPH_INTER. Viviendas particulares que disponen de internet (INEGI)
+  1. P15A24A. Población de 15 a 24 años que asiste a la escuela (INEGI)
+  2. GRAPROES. Resultado de dividir el monto de grados escolares aprobados por las personas de 15 a 130 años de edad entre las personas del mismo grupo de edad (INEGI)
+  3.. PEA. Personas de 12 a 130 años de edad que trabajaron, tenían trabajo pero no trabajaron o buscaron trabajo en la semana de referencia (INEGI)
+  4.. POCUPADA. Personas de 12 a 130 años de edad que trabajaron o que no trabajaron, pero sí tenían trabajo en la semana de referencia (INEGI)
+  5. PDESOCUP. Personas de 12 a 130 años de edad que no tenían trabajo, pero buscaron trabajo en la semana de referencia (INEGI)
+  6. PSINDER. Total de personas que no están afiliadas a servicios médicos en ninguna institución pública o privada (INEGI)
+  7. PRO_OCUP_C. Resultado de dividir el número de personas que residen en viviendas particulares habitadas entre el número de cuartos de esas viviendas (INEGI)
+  8 .VPH_PISOTI. Viviendas particulares habitadas con piso de tierra (INEGI)
+  9. VPH_S_ELEC. Viviendas particulares habitadas que no tienen energía eléctrica (INEGI)
+  10.VPH_AGUAFV. Viviendas particulares habitadas que no tienen disponibilidad de agua entubada (INEGI)
+  11. VPH_NODREN. Viviendas particulares habitadas que no tienen drenaje (INEGI)
+  12.VPH_INTER. Viviendas particulares que disponen de internet (INEGI)
 
 
 * Factores de riesgo sociales
 1. PHOGJEF_F. Personas en hogares censales donde la persona de referencia es mujer (INEGI)
 
 * Factores de riesgo de contexto
-1. VIVPAR_DES. Viviendas particulares deshabitadas (INEGI)
-2. Postes_Wifi. Número de postes con acceso a wifi por AGEB (Datos  CDMX)
-3. Amenzas. Número de delitos por AGEB (Datos CDMX)
-4. Fraude. Número de delitos por AGEB (Datos CDMX)
-5. Robo_Objetos. Número de delitos por AGEB (Datos CDMX)
-6. Robo_Objetos_Vehiculo. Número de delitos por AGEB (Datos  .CDMX)
-7. Robo_Transeunte. Número de delitos por AGEB (Datos CDMX)
-8. Robo_Accesorios_Autos. Número de delitos por AGEB (Datos CDMX)
-9. Robo_Negocio_Sin_Violencia_Autoservicio. Número de delitos por AGEB (Datos CDMX)
-10. Robo_Negocio_Sin_Violencia. Número de delitos por AGEB(Datos CDMX)
-11. Narcomenudeo. Número de delitos por AGEB (Datos CDMX)
-12. Robo_Casa_Sin_Violencia . Número de delitos por AGEB(Datos CDMX)
+  1. VIVPAR_DES. Viviendas particulares deshabitadas (INEGI)
+  2. Postes_Wifi. Número de postes con acceso a wifi por AGEB (Datos  CDMX)
+  3. Amenzas. Número de delitos por AGEB (Datos CDMX)
+  4. Fraude. Número de delitos por AGEB (Datos CDMX)
+  5. Robo_Objetos. Número de delitos por AGEB (Datos CDMX)
+  6. Robo_Objetos_Vehiculo. Número de delitos por AGEB (Datos  .CDMX)
+  7. Robo_Transeunte. Número de delitos por AGEB (Datos CDMX)
+  8. Robo_Accesorios_Autos. Número de delitos por AGEB (Datos CDMX)
+  9. Robo_Negocio_Sin_Violencia_Autoservicio. Número de delitos por AGEB (Datos CDMX)
+  10. Robo_Negocio_Sin_Violencia. Número de delitos por AGEB(Datos CDMX)
+  11. Narcomenudeo. Número de delitos por AGEB (Datos CDMX)
+  12. Robo_Casa_Sin_Violencia . Número de delitos por AGEB(Datos CDMX)
 
 
 ## Notas
 1. Guillermo Valdés Castellanos.
-* Ex director del CISEN (2007-2011)
-* Miembro del Consejo de Seguridad Nacional y del Gabinete de Seguridad Pública (2007-2011)
-* Coordinador del Grupo de Alto Nivel México-Estados Unidos en materia de cooperación para la seguridad (2007-2011)
-* Investigador de la Fundación Ortega y Gasset
-* Licenciado en Ciencias Sociales, ITAM
+ * Ex director del CISEN (2007-2011)
+ * Miembro del Consejo de Seguridad Nacional y del Gabinete de Seguridad Pública (2007-2011)
+ * Coordinador del Grupo de Alto Nivel México-Estados Unidos en materia de cooperación para la seguridad (2007-2011)
+ * Investigador de la Fundación Ortega y Gasset
+ * Licenciado en Ciencias Sociales, ITAM
