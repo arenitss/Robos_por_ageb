@@ -22,9 +22,10 @@ instalar <- function(paquete) {
   }
 }
     
-## Defining required libraries to install and load:
+## *******   Defining required libraries to install and load   *******
+
 ## Use this vector to indicate libraries to load.
-paquetes <- c("tensorflow", "keras", "tidyverse",
+paquetes <- c("tensorflow", "keras", "tidyverse","stringi",
               "tidymodels", "glmnet", "kknn","gt","ranger")
 
 #paquetes <- c('readr', 'tidyr', 'tibble', 'dplyr', 'magrittr', 'lubridate',
@@ -34,6 +35,7 @@ paquetes <- c("tensorflow", "keras", "tidyverse",
 lapply(paquetes, instalar)
 
 ## Load piping files and review of working libraries
+
 #source("../src/etl/metadata.R"  , encoding = 'UTF-8')
 source("../src/utils/utils.R", encoding = 'UTF-8')
 #source("../src/etl/00-load.R", encoding = 'UTF-8')
@@ -43,60 +45,139 @@ source("../src/utils/utils.R", encoding = 'UTF-8')
 #source("../src/etl/ggbiplot.R",   encoding = 'UTF-8')
 
 
-```
-
-```{r}
-library(tensorflow)
-library(keras)
-library(tidyverse) 
-library(tidymodels) 
-library(glmnet)
-library(kknn)
-library(dplyr)
-library(gt)
-```
-Descargamos base de datos
-```{r}
-ageb_censo_delitos_wifi <- read_csv("../data/ageb_censo_delitos_wifi.csv")
+#library(tensorflow)
+#library(keras)
+#library(tidyverse) 
+#library(tidymodels) 
+#library(glmnet)
+#library(kknn)
+#library(dplyr)
+#library(gt)
 
 ```
+
+
+### DATABASE
+
+
+```{r}
+
+# Importar archivo y codificar
+rm(list = ls())
+
+csv_file <- readLines("../data/ageb_censo_delitos_wifi.csv")
+csv_utf <- iconv(csv_file,"latin1", "UTF-8") # produces an error
+
+#database <- read_csv(csv_utf, skip_empty_rows = TRUE)
+#database
+
+database <- read_csv("../data/ageb_censo_delitos_wifi.csv")
+
+```
+
+## Tidy Process
+
+```{r}
+# *******   Preview of Dataset   *******
+ageb_censo_delitos_wifi <- database
+glimpse(ageb_censo_delitos_wifi)
+```
+
 
 ### LIMPIEZA
 ```{r}
+
+
+# cleaning column_name
+
+nom_cols <-  colnames (ageb_censo_delitos_wifi)
+nom_cols <- str_replace_all(tolower(nom_cols),pattern = "/| |-",replacement = '_')
+nom_cols <- str_replace_all(tolower(nom_cols), pattern = ":|::|\\.", replacement = '')
+nom_cols <- str_replace_all(tolower(nom_cols), pattern = "#", replacement = 'num')
+nom_cols <- stri_enc_toutf8(nom_cols)
+
+colnames(ageb_censo_delitos_wifi) <- nom_cols
+
+# categorical columns
+v_cat <- c("nom_mun")
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>% mutate(across(v_cat, ~ as.factor(.x)))
+
+
+# Remove irrelevant columns: Quitamos la primera columna (índice) y
+# la variable NOM_ENT -> Ciudad de Méxi
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>% select(-1, -nom_ent)
+
+# Reemplazamos con 0 los nas de las columnas de delitos, NA -> no hubo delitos en esa ageb
+v_cat <- c(52:63)
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>% mutate(across(v_cat, ~ ifelse(is.na(.x)==TRUE,0,.x)))
+
+# Corregimos los caracteres incorrectos en la vairiable nombre del municipio.
+ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
+  fct_relabel(~ gsub("µ", "a", .x))
+ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
+  fct_relabel(~ gsub("¢", "o", .x))
+ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
+  fct_relabel(~ gsub("\u0082", "e", .x))
+ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
+  fct_relabel(~ gsub("\\.", "", .x))
+ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
+  fct_relabel(~ gsub(" ", "_", .x))
+ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
+  fct_relabel( ~ str_replace_all(tolower(.x), pattern =" ", replacement = "a"))
+
+
+# Creamos la variable de poblacion que entre 15 y 24 años que no asiste a la escuela que faltaba
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(p15a24a = p15a17a + p18a24a)
+
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(p15a24a_f = p15a17a_f + p18a24a_f)
+
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(p15a24a_m = p15a17a_m + p18a24a_m)
+
+
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(p_15a24 = p_15a17 + p_18a24)
+
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(p_15a24_f = p_15a17_f + p_18a24_f)
+
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(p_15a24_m = p_15a17_m + p_18a24_m)
+
+
+# Eliminamos las variables que ya no son necesarias
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  select(-p_15a17, -p_18a24, -p_15a17_m, -p_18a24_m, -p_15a17_f, -p_18a24_f,
+         -p15a17a, -p18a24a, -p15a17a_f, -p18a24a_f, -p15a17a_m, -p18a24a_m)
+
+
+# Relocate variables:
+# --> Pasamos Robo de vehículos al inicio de la base
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  relocate(robo_vehículos)
+
+# --> Pasamos Robo de vehículos al inicio de la base
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  relocate(matches("^p15"), .before = pnacoe) %>%
+  relocate(matches("^p_15"), .after = pnacoe) 
+
+
 glimpse(ageb_censo_delitos_wifi)
-```
-Reemplazamos con 0 los nas de las columnas de delitos, porque na significa que no hubo delitos en esa ageb
-```{r}
-for (i in 54:65){
-  ageb_censo_delitos_wifi[which(is.na(ageb_censo_delitos_wifi[,i])),i] = 0
-}
-```
 
-Creamos la variable de poblacion que entre 15 y 24 años que no asiste a la escuela que faltaba
-```{r}
-ageb_censo_delitos_wifi<- ageb_censo_delitos_wifi %>%
-  mutate(P15A24A = P15A17A + P18A24A)
-```
-
-
-Quitamos la primera columna que es el indice
-```{r}
-ageb_censo_delitos_wifi<- ageb_censo_delitos_wifi[-1]
-```
-
-Pasamos Robo de vehículos al inicio de la base
-```{r}
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% 
-  relocate(Robo_Vehículos)
+#unique(ageb_censo_delitos_wifi$nom_mun)
+colnames(ageb_censo_delitos_wifi)
 
 ```
+
 
 
 Imputamos con la mediana los nas del resto de las columnas
 
 ```{r}
 #columnas que se desea imputar valores centrales
-col_valor_central <- c(10:53,65)
+col_valor_central <- c(10:48,57)
 #imputacion por valor central
 ageb_censo_delitos_wifi <- imputar_valor_central(data.frame(ageb_censo_delitos_wifi), col_valor_central)
 
@@ -112,14 +193,14 @@ summary(ageb_censo_delitos_wifi)
 Estandarizamos columnas
 ```{r}
 
-for (i in 10:65){
+for (i in 9:57){
   ageb_censo_delitos_wifi[,i] <- (ageb_censo_delitos_wifi[,i] - mean(ageb_censo_delitos_wifi[,i])) / sd(ageb_censo_delitos_wifi[,i])
 }
 ```
 
 
 ```{r}
-ageb_censo_delitos_wifi$Robo_Vehículos <- (ageb_censo_delitos_wifi$Robo_Vehículos - mean(ageb_censo_delitos_wifi$Robo_Vehículos)) / sd(ageb_censo_delitos_wifi$Robo_Vehículos)
+ageb_censo_delitos_wifi$robo_vehículos <- (ageb_censo_delitos_wifi$robo_vehículos - mean(ageb_censo_delitos_wifi$robo_vehículos)) / sd(ageb_censo_delitos_wifi$robo_vehículos)
 ```
 
 
@@ -127,86 +208,60 @@ ageb_censo_delitos_wifi$Robo_Vehículos <- (ageb_censo_delitos_wifi$Robo_Vehícu
 summary(ageb_censo_delitos_wifi)
 ```
 
+
 ### Modelos con dummies y con bandas
+
 https://www.elfinanciero.com.mx/nacional/40-bandas-se-disputan-la-cdmx/
 ```{r}
-unique(ageb_censo_delitos_wifi$NOM_MUN)
+unique(ageb_censo_delitos_wifi$nom_mun)
 ```
+LISTADO DE NOMBRE DE DELEGACIONES
+
+"alvaro_obregon", "tlalpan", "benito_ju rez",  "iztacalco",  "azcapotzalco", "venustiano_carranza", "tl huac", "gustavo_a_madero",
+"miguel_hidalgo", "xochimilco", "cuajimalpa_de_morelos", "la_magdalena_contreras", "milpa_alta", "cuauhtemoc", "coyoac n", "iztapalapa"
+
 
 Bandas
 ```{r}
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(union_tepito = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
-                                                      NOM_MUN == "Azcapotzalco"|
-                                                      NOM_MUN == "Benito Ju rez"|
-                                                      NOM_MUN == "Coyoac n"|
-                                                      NOM_MUN == "Cuauht\u0082moc"|
-                                                      NOM_MUN == "Gustavo A. Madero"|
-                                                      NOM_MUN == "Iztacalco"|
-                                                      NOM_MUN == "La Magdalena Contreras"|
-                                                      NOM_MUN == "Miguel Hidalgo"|
-                                                      NOM_MUN == "Tlalpan"|
-                                                      NOM_MUN == "Venustiano Carranza", 1,0)
-                                                        )
-```
 
-```{r}
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(cjng = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
-                                                      NOM_MUN == "µlvaro Obreg¢n"|
-                                                      NOM_MUN == "Benito Ju rez"|
-                                                      NOM_MUN == "Cuajimalpa de Morelos"|
-                                                      NOM_MUN == "Cuauht\u0082moc"|
-                                                      NOM_MUN == "Gustavo A. Madero"|
-                                                      NOM_MUN == "Iztapalapa"|
-                                                      NOM_MUN == "Tlalpan", 1,0)
-                                                        )
+# union_tepito
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+  mutate( union_tepito = ifelse(
+    nom_mun %in% c("alvaro_obregon", "azcapotzalco", "benito_ju rez", "coyoac n",
+                   "cuauhtemoc", "gustavo_a_madero", "iztacalco", "la_magdalena_contreras",
+                   "miguel_hidalgo", "tlalpan", "venustiano_carranza"), 1, 0))
 
-```
+#CJNG
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+  mutate( cjng = ifelse(
+    nom_mun %in% c("alvaro_obregon", "benito_ju rez",  "cuajimalpa_de_morelos", 
+                   "cuauhtemoc", "gustavo_a_madero",  "iztapalapa", "tlalpan"), 1, 0))
+
+#cartel_de_tlahuac
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+  mutate( cartel_de_tlahuac  = ifelse(
+    nom_mun %in% c("alvaro_obregon", "tl huac", "iztapalapa", "milpa_alta", "tlalpan", "xochimilco"), 1, 0))
 
 
-```{r}
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(cartel_de_tlahuac = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
-                                                      NOM_MUN == "Tl huac"|
-                                                      NOM_MUN == "Iztapalapa"|
-                                                      NOM_MUN == "Milpa Alta"|
-                                                      NOM_MUN == "Tlalpan"|
-                                                      NOM_MUN == "Xochimilco", 1,0)
-                                                        )
-```
+#lenin_canchola
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+  mutate( lenin_canchola  = ifelse(
+    nom_mun %in% c("alvaro_obregon", "benito_ju rez", "la_magdalena_contreras", "miguel_hidalgo", "tlalpan"), 1, 0))
 
-```{r}
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(lenin_canchola = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
-                                                      NOM_MUN == "µlvaro Obreg¢n"|
-                                                      NOM_MUN == "Benito Ju rez"|
-                                                      NOM_MUN == "La Magdalena Contreras"|
-                                                      NOM_MUN == "Miguel Hidalgo"|
-                                                      NOM_MUN == "Tlalpan", 1,0)
-                                                        )
 
-```
+#anti_union_tepito
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+  mutate( anti_union_tepito  = ifelse(
+    nom_mun %in% c("alvaro_obregon", "azcapotzalco", "cuauhtemoc", "iztacalco",  "venustiano_carranza",), 1, 0))
 
-```{r}
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(anti_union_tepito = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
-                                                      NOM_MUN == "Azcapotzalco"|
-                                                      NOM_MUN == "Cuauht\u0082moc"|
-                                                      NOM_MUN == "Iztacalco"|
-                                                      NOM_MUN == "Venustiano Carranza", 1,0))
-                                                       
+
+#rodolfos
+ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+  mutate( rodolfos  = ifelse(
+    nom_mun %in% c("alvaro_obregon", "coyoac n", "iztacalco", "milpa_alta", "tl huac", "xochimilco"), 1, 0))
 
 
 ```
-
-```{r}
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>% mutate(rodolfos = ifelse(NOM_MUN == "µlvaro Obreg¢n"|
-                                                      NOM_MUN == "Coyoac n"|
-                                                      NOM_MUN == "Iztacalco"|
-                                                      NOM_MUN == "Milpa Alta"|
-                                                      NOM_MUN == "Tl huac"|
-                                                      NOM_MUN == "Xochimilco", 1,0)
-                                                        )
-
-
-```
-
 
 
 ## EDA
@@ -357,14 +412,6 @@ summary(regresion) #Review the results
 ### IMPORTANCIA
 
 ```{r}
-
-```
-```{r}
-
-```
-
-
-```{r}
 rf <- ranger(Robo_Vehículos ~ pop_15_24 + P15YM_AN + P15A24A + 
     GRAPROES + PEA + POCUPADA + PDESOCUP + PSINDER + PHOGJEF_F + 
     VIVPAR_DES + PRO_OCUP_C + VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + 
@@ -375,7 +422,7 @@ rf <- ranger(Robo_Vehículos ~ pop_15_24 + P15YM_AN + P15A24A +
 ```
 
 ```{r}
-importance(rf)->importancia
+importance(rf) -> importancia
 sort(importancia,decreasing = TRUE)
 ```
 
@@ -410,10 +457,12 @@ ageb_censo_delitos_wifi$rodolfos <- as.character(ageb_censo_delitos_wifi$rodolfo
 Bandas
 
 ```{r}
+
 robos_receta_3 <- recipe(Robo_Vehículos ~ pop_15_24 + P15YM_AN+ P15A24A +GRAPROES+
  PEA + POCUPADA + PDESOCUP+ PSINDER+ PHOGJEF_F + VIVPAR_DES +
  PRO_OCUP_C+ VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + VPH_NODREN + VPH_INTER + Amenzas +Fraude + Robo_Objetos + Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos+ Robo_Negocio_Sin_Violencia_Autoservicio  +
 Robo_Negocio_Sin_Violencia + Narcomenudeo + Robo_Casa_Sin_Violencia +
 Postes_Wifi+union_tepito+cjng+cartel_de_tlahuac+lenin_canchola+anti_union_tepito+rodolfos , robos_entrena)
+
 ```
 
