@@ -91,6 +91,7 @@ La base de datos está estructurada por AGEB, es decir, cada renglón contiene l
   11. Narcomenudeo. Número de delitos por AGEB (Datos CDMX)
   12. Robo_Casa_Sin_Violencia . Número de delitos por AGEB(Datos CDMX)
 
+![](../images/Modelo2.png)
 
 ## Notas
 1. Guillermo Valdés Castellanos.
