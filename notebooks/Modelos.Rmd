@@ -45,15 +45,6 @@ source("../src/utils/utils.R", encoding = 'UTF-8')
 #source("../src/etl/ggbiplot.R",   encoding = 'UTF-8')
 
 
-#library(tensorflow)
-#library(keras)
-#library(tidyverse) 
-#library(tidymodels) 
-#library(glmnet)
-#library(kknn)
-#library(dplyr)
-#library(gt)
-
 ```
 
 
@@ -63,7 +54,6 @@ source("../src/utils/utils.R", encoding = 'UTF-8')
 ```{r}
 
 # Importar archivo y codificar
-rm(list = ls())
 
 csv_file <- readLines("../data/ageb_censo_delitos_wifi.csv")
 csv_utf <- iconv(csv_file,"latin1", "UTF-8") # produces an error
@@ -353,7 +343,6 @@ mejor_modelo
 ```{r}
 modelo_final <- finalize_workflow(flujo_robos, mejor_modelo) %>%
   fit(robos_entrena)
-
 ```
 
 ```{r}
@@ -448,8 +437,9 @@ rf <- ranger(robo_vehículos ~
 ```
 
 ```{r}
-importance(rf) -> importancia
-sort(importancia,decreasing = TRUE)
+importancia <- importance(rf)
+importancia %>% as.data.frame(importancia) %>% rownames_to_column("variable") %>% 
+  arrange(desc(.))
 ```
 
 Modelos con dummies y con bandas
@@ -462,21 +452,14 @@ glimpse(ageb_censo_delitos_wifi)
 ```
 
 Cambiamos de doble to character
+
 ```{r}
 ageb_censo_delitos_wifi$union_tepito <- as.character(ageb_censo_delitos_wifi$union_tepito)
-
 ageb_censo_delitos_wifi$cjng <- as.character(ageb_censo_delitos_wifi$cjng)
-
 ageb_censo_delitos_wifi$cartel_de_tlahuac <- as.character(ageb_censo_delitos_wifi$ cartel_de_tlahuac)
-
 ageb_censo_delitos_wifi$lenin_canchola <- as.character(ageb_censo_delitos_wifi$ lenin_canchola)
-
 ageb_censo_delitos_wifi$anti_union_tepito <- as.character(ageb_censo_delitos_wifi$ anti_union_tepito)
-
 ageb_censo_delitos_wifi$rodolfos <- as.character(ageb_censo_delitos_wifi$rodolfos)
-
-
-
 ```
 
 
