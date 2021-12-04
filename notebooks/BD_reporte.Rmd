@@ -33,15 +33,18 @@ En la base de datos utilizada se cuneta con la georrefernciación (latitud y lon
 
 Ambas bases de datos fueron analizadas y se realizó un proceso de limpieza y transformación que consistió en los siguientes puntos:
 
-Para la base de datos del Censo no hubo necesidad de realizar ninguna limpieza, sin embargo si se creó una nueva variable:
+Para la base de datos del Censo:
 
 - Se agruparon dos categorías de población en una. De modeo que los grupos de edades de 15 a 17 y de 18 a 24 se integraron en una sola categoría: de 15 a 24. Se hizo una variable con el total de la población en ese rango y otra solo para hombres en ese mismo rango de edad. Esta agrupación se realizó para capturar lo que se ha observado en estudios como la Encuesta NAcional de Victimización y Percepción sobre Seguridad Pública (ENVIPE) donde se indica que en este rango de edad existe una concentración de población con propensión a delinquir.
-- Se creó una nueva variable que posteriormente se utiliza para relacionar la base de datos del Censo con las otras utilizadas
+- Se creó una nueva variable que posteriormente se utiliza para relacionar la base de datos del Censo con las otras utilizadas.
+- Se agrupo la información de cada AGEB con la de su localidad.
 
 Para la base de datos de Delitos:
 
 - Se descartaron los registros que no tenían información de coordenadas (latitud y/o longitud)
-- Creación de una nueva variable formada por los valores de latitud y longitud  
+- Creación de una nueva variable formada por los valores de latitud y longitud 
+- Se transforma las frecuencias simples de delitos a tasas por el número de habitantes de cada AGEB
+- Se modifica la variable dependiente (número de robos de vehículos) a una variable binomial. Dicha variable marca 0 si en la AGEB no se reportaron robos y 1 si se reportó alguno.
 
 ### Proceso de cruce de Bases de Datos
 
