@@ -163,7 +163,6 @@ ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   relocate(matches("^p15"), .before = pnacoe) %>%
   relocate(matches("^p_15"), .after = pnacoe) 
 
-
 glimpse(ageb_censo_delitos_wifi)
 
 #unique(ageb_censo_delitos_wifi$nom_mun)
@@ -225,38 +224,38 @@ Bandas
 ```{r}
 
 # union_tepito
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( union_tepito = ifelse(
     nom_mun %in% c("alvaro_obregon", "azcapotzalco", "benito_ju rez", "coyoac n",
                    "cuauhtemoc", "gustavo_a_madero", "iztacalco", "la_magdalena_contreras",
                    "miguel_hidalgo", "tlalpan", "venustiano_carranza"), 1, 0))
 
 #CJNG
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( cjng = ifelse(
     nom_mun %in% c("alvaro_obregon", "benito_ju rez",  "cuajimalpa_de_morelos", 
                    "cuauhtemoc", "gustavo_a_madero",  "iztapalapa", "tlalpan"), 1, 0))
 
 #cartel_de_tlahuac
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( cartel_de_tlahuac  = ifelse(
     nom_mun %in% c("alvaro_obregon", "tl huac", "iztapalapa", "milpa_alta", "tlalpan", "xochimilco"), 1, 0))
 
 
 #lenin_canchola
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( lenin_canchola  = ifelse(
     nom_mun %in% c("alvaro_obregon", "benito_ju rez", "la_magdalena_contreras", "miguel_hidalgo", "tlalpan"), 1, 0))
 
 
 #anti_union_tepito
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( anti_union_tepito  = ifelse(
-    nom_mun %in% c("alvaro_obregon", "azcapotzalco", "cuauhtemoc", "iztacalco",  "venustiano_carranza",), 1, 0))
+    nom_mun %in% c("alvaro_obregon", "azcapotzalco", "cuauhtemoc", "iztacalco",  "venustiano_carranza"), 1, 0))
 
 
 #rodolfos
-ageb_censo_delitos_wifi<-ageb_censo_delitos_wifi %>%
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( rodolfos  = ifelse(
     nom_mun %in% c("alvaro_obregon", "coyoac n", "iztacalco", "milpa_alta", "tl huac", "xochimilco"), 1, 0))
 
@@ -275,11 +274,11 @@ many_scatter_plots
 
 ```{r}
 many_loess_plots <- ManyPlots(df = dplyr::select_if(ageb_censo_delitos_wifi,
-is.numeric),tipo_grafica = LoessPlot)
+                                                    is.numeric),tipo_grafica = LoessPlot)
 many_loess_plots
 ```
 
-## MODELO
+## MODELO 1: 
 
 
 ```{r}
@@ -291,17 +290,24 @@ robos_prueba <- testing(robos_split)
 
 
 ```{r}
-robos_receta <- recipe(Robo_Vehículos ~ pop_15_24 + P15YM_AN+ P15A24A +GRAPROES+
- PEA + POCUPADA + PDESOCUP+ PSINDER+ PHOGJEF_F + VIVPAR_DES +
- PRO_OCUP_C+ VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + VPH_NODREN + VPH_INTER + Amenzas +Fraude + Robo_Objetos + Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos+ Robo_Negocio_Sin_Violencia_Autoservicio  +
-Robo_Negocio_Sin_Violencia + Narcomenudeo + Robo_Casa_Sin_Violencia +
-Postes_Wifi, robos_entrena)
+robos_receta <- recipe(robo_vehículos ~
+                         pop_15_24 + p15ym_an + p15a24a + graproes + pea +
+                         pocupada + pdesocup + psinder + phogjef_f + vivpar_des +
+                         pro_ocup_c+ vph_pisoti + vph_s_elec + vph_aguafv + vph_nodren +
+                         vph_inter + amenzas + fraude + robo_objetos +
+                         robo_objetos_vehiculo +
+                         robo_transeunte + robo_accesorios_autos +
+                         robo_negocio_sin_violencia_autoservicio  +
+                         robo_negocio_sin_violencia + narcomenudeo +
+                         robo_casa_sin_violencia + postes_wifi,
+                       robos_entrena)
 ```
 
 ```{r}
 modelo_penalizado <- linear_reg(mixture = tune(), penalty = tune()) %>%
   set_args(lambda.min_ratio = 1e-18) %>%
   set_engine("glmnet")  
+
 flujo_robos <- workflow() %>% 
   add_recipe(robos_receta) %>% 
   add_model(modelo_penalizado)
@@ -310,6 +316,7 @@ flujo_robos <- workflow() %>%
 ```{r}
 val_split <- manual_rset(robos_split %>% list(), "validación")
 # hacemos un grid de valores de mezcla y penalización
+
 params <- parameters(penalty(range = c(-5, 2), trans = log10_trans()),
                             mixture(range = c(0, 1)))
 grid <- grid_regular(params, levels = c(penalty = 20, mixture = 5))
@@ -318,6 +325,7 @@ grid
 
 ```{r}
 mis_metricas <- metric_set(rmse)
+
 eval_tbl <- tune_grid(flujo_robos,
                       resamples = val_split,
                       grid = grid,
@@ -349,12 +357,17 @@ modelo_final <- finalize_workflow(flujo_robos, mejor_modelo) %>%
 ```
 
 ```{r}
-robos_receta_2 <- recipe(Robo_Vehículos ~ pop_15_24 + P15YM_AN+ P15A24A +GRAPROES+
- PEA + POCUPADA + PDESOCUP+ PSINDER+ PHOGJEF_F + VIVPAR_DES +
- PRO_OCUP_C+ VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + VPH_NODREN + VPH_INTER + Amenzas +Fraude + Robo_Objetos + Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos+ Robo_Negocio_Sin_Violencia_Autoservicio  +
-Robo_Negocio_Sin_Violencia + Narcomenudeo + Robo_Casa_Sin_Violencia +
-Postes_Wifi, robos_entrena)
-
+robos_receta_2 <- recipe(robo_vehículos ~
+                           pop_15_24 + p15ym_an + p15a24a + graproes + pea +
+                           pocupada + pdesocup + psinder + phogjef_f + vivpar_des +
+                           pro_ocup_c+ vph_pisoti + vph_s_elec + vph_aguafv + vph_nodren +
+                           vph_inter + amenzas + fraude + robo_objetos +
+                           robo_objetos_vehiculo +
+                           robo_transeunte + robo_accesorios_autos +
+                           robo_negocio_sin_violencia_autoservicio  +
+                           robo_negocio_sin_violencia + narcomenudeo +
+                           robo_casa_sin_violencia + postes_wifi,
+                         robos_entrena)
 ```
 
 
@@ -363,6 +376,7 @@ Postes_Wifi, robos_entrena)
 modelo_penalizado_2 <- linear_reg(mixture = 0, penalty = .6158482) %>%
   set_args(lambda.min_ratio = 1e-18) %>%
   set_engine("glmnet")  
+
 flujo_robos_2 <- workflow() %>% 
   add_recipe(robos_receta_2) %>% 
   add_model(modelo_penalizado_2)
@@ -385,13 +399,13 @@ robos_prueba_normal <- testing(robos_split)
 
 ```{r}
 metricas(robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal)), 
-     truth = Robo_Vehículos, estimate = .pred) 
+     truth = robo_vehículos, estimate = .pred) 
   #gt() %>% fmt_number(.estimate, decimals = 2)
 ```
 
 ```{r}
 robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal)) %>%
-  ggplot(aes(x = .pred, y = Robo_Vehículos)) + geom_abline() + 
+  ggplot(aes(x = .pred, y = robo_vehículos)) + geom_abline() + 
     geom_point(colour = "red") + coord_obs_pred()
 ```
 ```{r}
@@ -400,25 +414,37 @@ ajuste %>% pull_workflow_fit() %>% broom::tidy() %>%
   select(term, estimate) %>% 
   gt()
 ```
-```{r}
-regresion = lm(Robo_Vehículos ~ pop_15_24 + P15YM_AN+ P15A24A +GRAPROES+
- PEA + POCUPADA + PDESOCUP+ PSINDER+ PHOGJEF_F + VIVPAR_DES +
- PRO_OCUP_C+ VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + VPH_NODREN + VPH_INTER + Amenzas +Fraude + Robo_Objetos + Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos+ Robo_Negocio_Sin_Violencia_Autoservicio  +
-Robo_Negocio_Sin_Violencia + Narcomenudeo + Robo_Casa_Sin_Violencia +
-Postes_Wifi, robos_entrena) #Create the linear regression
-summary(regresion) #Review the results
 
+
+```{r}
+regresion = lm(robo_vehículos ~
+                 pop_15_24 + p15ym_an + p15a24a + graproes + pea +
+                 pocupada + pdesocup + psinder + phogjef_f + vivpar_des +
+                 pro_ocup_c + vph_pisoti + vph_s_elec + vph_aguafv + vph_nodren +
+                 vph_inter + amenzas + fraude + robo_objetos +
+                 robo_objetos_vehiculo +
+                 robo_transeunte + robo_accesorios_autos +
+                 robo_negocio_sin_violencia_autoservicio  +
+                 robo_negocio_sin_violencia + narcomenudeo +
+                 robo_casa_sin_violencia + postes_wifi,
+               robos_entrena) #Create the linear regression
+
+summary(regresion) #Review the results
 ```
 ### IMPORTANCIA
 
 ```{r}
-rf <- ranger(Robo_Vehículos ~ pop_15_24 + P15YM_AN + P15A24A + 
-    GRAPROES + PEA + POCUPADA + PDESOCUP + PSINDER + PHOGJEF_F + 
-    VIVPAR_DES + PRO_OCUP_C + VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + 
-    VPH_NODREN + VPH_INTER + Amenzas + Fraude + Robo_Objetos + 
-    Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos + 
-    Robo_Negocio_Sin_Violencia_Autoservicio + Robo_Negocio_Sin_Violencia + 
-    Narcomenudeo + Robo_Casa_Sin_Violencia + Postes_Wifi, data = robos_entrena, importance = "permutation")
+rf <- ranger(robo_vehículos ~
+               pop_15_24 + p15ym_an + p15a24a + graproes + pea +
+               pocupada + pdesocup + psinder + phogjef_f + vivpar_des +
+               pro_ocup_c + vph_pisoti + vph_s_elec + vph_aguafv + vph_nodren +
+               vph_inter + amenzas + fraude + robo_objetos +
+               robo_objetos_vehiculo +
+               robo_transeunte + robo_accesorios_autos +
+               robo_negocio_sin_violencia_autoservicio  +
+               robo_negocio_sin_violencia + narcomenudeo +
+               robo_casa_sin_violencia + postes_wifi,
+    data = robos_entrena, importance = "permutation")
 ```
 
 ```{r}
@@ -429,7 +455,7 @@ sort(importancia,decreasing = TRUE)
 Modelos con dummies y con bandas
 https://www.elfinanciero.com.mx/nacional/40-bandas-se-disputan-la-cdmx/
 ```{r}
-unique(ageb_censo_delitos_wifi$NOM_MUN)
+unique(ageb_censo_delitos_wifi$nom_mun)
 ```
 ```{r}
 glimpse(ageb_censo_delitos_wifi)
@@ -441,11 +467,11 @@ ageb_censo_delitos_wifi$union_tepito <- as.character(ageb_censo_delitos_wifi$uni
 
 ageb_censo_delitos_wifi$cjng <- as.character(ageb_censo_delitos_wifi$cjng)
 
-ageb_censo_delitos_wifi$ cartel_de_tlahuac <- as.character(ageb_censo_delitos_wifi$ cartel_de_tlahuac)
+ageb_censo_delitos_wifi$cartel_de_tlahuac <- as.character(ageb_censo_delitos_wifi$ cartel_de_tlahuac)
 
-ageb_censo_delitos_wifi$ lenin_canchola <- as.character(ageb_censo_delitos_wifi$ lenin_canchola)
+ageb_censo_delitos_wifi$lenin_canchola <- as.character(ageb_censo_delitos_wifi$ lenin_canchola)
 
-ageb_censo_delitos_wifi$ anti_union_tepito <- as.character(ageb_censo_delitos_wifi$ anti_union_tepito)
+ageb_censo_delitos_wifi$anti_union_tepito <- as.character(ageb_censo_delitos_wifi$ anti_union_tepito)
 
 ageb_censo_delitos_wifi$rodolfos <- as.character(ageb_censo_delitos_wifi$rodolfos)
 
@@ -458,11 +484,19 @@ Bandas
 
 ```{r}
 
-robos_receta_3 <- recipe(Robo_Vehículos ~ pop_15_24 + P15YM_AN+ P15A24A +GRAPROES+
- PEA + POCUPADA + PDESOCUP+ PSINDER+ PHOGJEF_F + VIVPAR_DES +
- PRO_OCUP_C+ VPH_PISOTI + VPH_S_ELEC + VPH_AGUAFV + VPH_NODREN + VPH_INTER + Amenzas +Fraude + Robo_Objetos + Robo_Objetos_Vehiculo + Robo_Transeunte + Robo_Accesorios_Autos+ Robo_Negocio_Sin_Violencia_Autoservicio  +
-Robo_Negocio_Sin_Violencia + Narcomenudeo + Robo_Casa_Sin_Violencia +
-Postes_Wifi+union_tepito+cjng+cartel_de_tlahuac+lenin_canchola+anti_union_tepito+rodolfos , robos_entrena)
+robos_receta_3 <- recipe(robo_vehículos ~
+                           pop_15_24 + p15ym_an + p15a24a + graproes + pea +
+                           pocupada + pdesocup + psinder + phogjef_f + vivpar_des +
+                           pro_ocup_c + vph_pisoti + vph_s_elec + vph_aguafv + vph_nodren +
+                           vph_inter + amenzas + fraude + robo_objetos +
+                           robo_objetos_vehiculo +
+                           robo_transeunte + robo_accesorios_autos +
+                           robo_negocio_sin_violencia_autoservicio  +
+                           robo_negocio_sin_violencia + narcomenudeo +
+                           robo_casa_sin_violencia + postes_wifi +
+                           union_tepito + cjng + cartel_de_tlahuac +
+                           lenin_canchola + anti_union_tepito + rodolfos,
+                         robos_entrena)
 
 ```
 
