@@ -73,7 +73,6 @@ relevantes para nuestro análisis.
 ageb_censo_delitos_wifi <- database
 glimpse(ageb_censo_delitos_wifi)
 summary(ageb_censo_delitos_wifi)
-
 ```
 
 
@@ -97,18 +96,22 @@ v_cat <- c("nom_mun")
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate(across(all_of(v_cat), ~ as.factor(.x)))
 
-
-# Remove irrelevant columns: Quitamos la primera columna (índice) y
-# la variable NOM_ENT -> Ciudad de Méxi
-ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>% select(-1, -nom_ent)
-
-# Reemplazamos con 0 los NA's de las columnas:
+# Observamos algunas variables numéricas referentes a población-viviendas-delitos.
+# En la documentación del CENSO se indica que es un valor no especificado, por
+# lo que, para este ejercicio, hemos acordado sustituir NA's con 0 de las columnas:
     # 1. Delitos, NA -> no hubo delitos en esa AGEB
     # 2. Postes_wifi, NA -> no existen puntos de acceso a wifi en esa AGEB
+    # 3. Población, NA -> no se tienen registros de personas en la AGEb
+    # 4. Viviendas-Hogares, NA -> no se tienen registros de viviendas|hogares
 
-v_cat <- c(52:63)
+v_cat <- c(10:26, 30:44, 47:65)
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate(across(all_of(v_cat), ~ ifelse(is.na(.x)==TRUE,0,.x)))
+
+# Remove irrelevant columns: Quitamos la primera columna (índice) y
+# la variable NOM_ENT -> Ciudad de México
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>% select(-1, -nom_ent)
+
 
 # Corregimos los caracteres incorrectos en la vairiable nombre del municipio.
 ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
@@ -526,10 +529,10 @@ Transformamos la variable obetivo:
 ```{r}
 
 # Nuevo dataser con variables transformadas
-ageb_censo_delitos_wifi_t1 <- ageb_censo_delitos_wifi %>%
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate(tasa_rob_veh = robo_vehículos/pobtot*1000) %>% relocate(tasa_rob_veh)
 
-ggplot(ageb_censo_delitos_wifi_t1, aes(y = tasa_rob_veh)) +
+ggplot(ageb_censo_delitos_wifi, aes(y = tasa_rob_veh)) +
   geom_boxplot() + labs(title = "Fig. 4    Distribución de la variable Tasa de
                         Robo de Vehículos por cada mil hab.")
 ```
@@ -550,9 +553,38 @@ Transformar variable respuesta a binaria:
 ```{r}
 
 # Nuevo dataset con variables transformadas
-ageb_censo_delitos_wifi_t2 <- ageb_censo_delitos_wifi %>%
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate(robo_vehicular = ifelse(robo_vehículos>0, 1, 0)) %>% relocate(robo_vehicular)
-ageb_censo_delitos_wifi_t2
+
+summary(ageb_censo_delitos_wifi)
+colnames(ageb_censo_delitos_wifi)
+
+```
+
+Lo primero que destacamos es que la gran mayoría de nuestras variables ya están
+en rangos adecuados para poder procesarlas.
+
+Por otro lado, observemos que algunas de nuestras variables tienen presencia de
+Inf y NA's que en realidad corresponden a NaN´s ocasionado por cocientes en los
+que nuestro denominador era 0 máqina. Estos resultados no tienen sentido pues
+en realidad pueden derivarse de falta de informacion recolectada en el censo
+errores de correspondencia entre variables. Por lo que nuestro siguiente paso
+será modificar estos valores enviándolos a 0.
+
+Durante el proceso, se observó que la variable "tx1k_vph_inter" contiene tasas al
+millar >100k, lo cual es completamente inconsistente con la tasa. Tales Valores
+se imputaran con la mediana: 756.7
+
+```{r}
+
+v_cat <- c(1:33)
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(across(all_of(v_cat), ~ ifelse(is.na(.x)==TRUE,0,.x)),
+         across(all_of(v_cat), ~ ifelse(is.infinite(.x)==TRUE,0,.x)))
+
+ageb_censo_delitos_wifi["tx1k_vph_inter"][ageb_censo_delitos_wifi["tx1k_vph_inter"]>1000] <- 756.7
+
+summary(ageb_censo_delitos_wifi)
 
 ```
 
