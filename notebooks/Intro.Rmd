@@ -7,7 +7,7 @@ output: html_document
 
 ## Modelo de Prevención 
 
-El modelo de prevención de la violencia que se toma en este proyecto es una propuesta del Lic. Guillermo Valadés Castellanos[1]. Dicho ejercicio ha sido implementado con éxito en el municipio de Nezahualcóyotl en 2015, el área metropolitana de Guadalajara en 2018 y en el estado de Tamaulipas en 2019.
+El modelo teórico de prevención de la violencia que se toma en este proyecto es una propuesta del Lic. Guillermo Valadés Castellanos[1]. Este modelo tiene como propósito la implementación de políticas públicas tomando como punto de partida aquellas variables que tienen mayor relación con la incidencia delictiva. Del mismo modo, la propuesta intenta segmentar geográficamente el tipo de política dependiendo de las necesidades especificas de cada región.
 
 El modelo considera los siguientes puntos de partida:
 
@@ -41,10 +41,13 @@ La delincuencia puede clasificarse por tipo de actor delictivo. Existen delitos 
 
 * Indirecta. Sobre causas estructurales, como desigualdad social.
 
-Este modelo por tanto se centra en delitos cometidos por individuos aislados, pandillas y bandas; se focaliza en la disminución de factores de riesgo; y debido a que sólo se cuenta con el número de carpetas de investigación reportadas por la Fiscalía de la Ciudad de México, se eligió el robo de vehículos como delito a estudiar debido a que el nivel de registros es mayor que otros delitos cuya cifra negra ronda porcentajes cercanos al 99%.
+## Desarrollo
 
-Es importante mencionar, que debido a que se cuenta con información pública, únicamente, buena parte del trabajo de este proyecto es la recopilación y adecuación de las variables integradas de varias fuentes disponibles como los datos de Ciudad de México y el Instituto Nacional de Estadística y Geografía (INEGI).
+Este modelo se centra en delitos cometidos por individuos aislados, pandillas y bandas; se focaliza en la disminución de factores de riesgo; y debido a que sólo se cuenta con el número de carpetas de investigación reportadas por la Fiscalía de la Ciudad de México, se eligió el robo de vehículos como delito a estudiar debido a que el nivel de registros es mayor que el de otros incidentes, donde la cifra negra ronda porcentajes cercanos a 99%. Es importante mencionar, que debido a que se cuenta con información pública, únicamente, buena parte del trabajo de este proyecto es la recopilación y adecuación de las variables integradas de varias fuentes disponibles como los datos de Ciudad de México y el Instituto Nacional de Estadística y Geografía (INEGI).
 
+La implementación de este modelo se realizó, en primer lugar, tomando como variable dependiente el número de robos de vehículos. Mediante una regresión lineal se intentó encontrar aquellas variables más importantes en el modelo. Sin embargo, debido a la naturaleza de los datos, los cuales están segmentados por la unidad geográfica mínima que realiza el Instituto Nacional de Estadística y Geografía (INEGI) se encontró que la mediana de los datos es 0 y cerca de 75% de las aŕeas geográficas tienen menos de 3 robos de vehículos durante 2020, lo que convierte nuestra base de datos en una base rala.
+
+Por tanto, en un segundo intento por encontrar las variables que se encuentran más relacionadas con el robo de vehículos, se modificó la variable dependiente (número de robos de vehículos) convirtiendola en una variable binomial. Dicha variable marca 0 si en el área geográfica básica (AGEB) no se reportaron robos y 1 si se reportó alguno.
 
 
 ## Diagnóstico
@@ -92,6 +95,8 @@ La base de datos está estructurada por AGEB, es decir, cada renglón contiene l
   12. Robo_Casa_Sin_Violencia . Número de delitos por AGEB(Datos CDMX)
 
 ![](../images/Modelo2.png)
+
+
 
 ## Notas
 1. Guillermo Valdés Castellanos.
