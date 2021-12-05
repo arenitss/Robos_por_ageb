@@ -36,15 +36,24 @@ Ambas bases de datos fueron analizadas y se realizó un proceso de limpieza y tr
 Para la base de datos del Censo:
 
 - Se agruparon dos categorías de población en una. De modeo que los grupos de edades de 15 a 17 y de 18 a 24 se integraron en una sola categoría: de 15 a 24. Se hizo una variable con el total de la población en ese rango y otra solo para hombres en ese mismo rango de edad. Esta agrupación se realizó para capturar lo que se ha observado en estudios como la Encuesta NAcional de Victimización y Percepción sobre Seguridad Pública (ENVIPE) donde se indica que en este rango de edad existe una concentración de población con propensión a delinquir.
+- Se corrigen los caracteres incorrectos en la vairiable nombre del municipio
 - Se creó una nueva variable que posteriormente se utiliza para relacionar la base de datos del Censo con las otras utilizadas.
-- Se agrupo la información de cada AGEB con la de su localidad.
+- En relación con las variables que indican el grado de desarrollo humano al observar alta presencia de NA's y 0's en las variables relacionadas con características de la vivienda (piso de tierra, sin agua entubada, sin drenaje y sin energía eléctrica), se concluye que al ser un análisis en la CDMX tienen poca o nula variabilidad pues, aunque si existen zonas marginadas, al encontrarnos en una zona mayormente urbana éstas no son relevantes para nuestro análisis. Por esta razón se eliminaron. Aunque la información relacionada con desarrollo humano es capturada por las variables de servicios de internet y afiliación a servicios de salud.
+- Durante nuestra etapa de modelado, descubrimos que existen 17 AGEBS con POBTOT = 0 y que esto se replica en todas las variables relacionadas a población, por lo que podemos eliminar estos registros al no representar perdida de información siginificativa (17 de +2000)
+- Las variables relacionadas con la población afiliada a servicios médicos, hogares cuya jefe de falia es una mujer y viviendas desocupadas se relativiza utilizando tasas por cada mil habitantes.
+
 
 Para la base de datos de Delitos:
 
 - Se descartaron los registros que no tenían información de coordenadas (latitud y/o longitud)
 - Creación de una nueva variable formada por los valores de latitud y longitud 
-- Se transforma las frecuencias simples de delitos a tasas por el número de habitantes de cada AGEB
+- Los datos nulos se imputan con cero
+- Se agregan en una sola variable todos los delitos de robos y en "otras" los de delitos de fraude, amenazas y narcomenudeo
 - Se modifica la variable dependiente (número de robos de vehículos) a una variable binomial. Dicha variable marca 0 si en la AGEB no se reportaron robos y 1 si se reportó alguno.
+
+Para la base de datos de Poste_Wifi:
+- Los datos nulos se imputan con cero
+
 
 ### Proceso de cruce de Bases de Datos
 
