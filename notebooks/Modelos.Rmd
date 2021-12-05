@@ -1,6 +1,6 @@
 ---
 title: "EDA. Incidencia Delictiva por AGEB"
-author: "A_NAYELLI XXX, R_URIEL ABRAHAM XXX, ZC_JOSE LUIS R. 183347"
+author: "AM_NAYELLI XXX, RD_URIEL ABRAHAM XXX, ZC_JOSE LUIS R. 183347"
 date: "06/11/2021"
 output: html_document
 ---
@@ -28,11 +28,9 @@ instalar <- function(paquete) {
 paquetes <- c("tensorflow", "keras", "tidyverse","stringi",
               "tidymodels", "glmnet", "kknn","gt","ranger")
 
-#paquetes <- c('readr', 'tidyr', 'tibble', 'dplyr', 'magrittr', 'lubridate',
-#              'stringr','ggplot2', 'forcats', "gridExtra", 'ggthemes',
-#              'GGally','mice','VIM')
+# c("gridExtra", 'ggthemes','GGally','mice','VIM')
 
-lapply(paquetes, instalar)
+invisible(lapply(paquetes, instalar))
 
 ## Load piping files and review of working libraries
 
@@ -62,15 +60,20 @@ csv_utf <- iconv(csv_file,"latin1", "UTF-8") # produces an error
 #database
 
 database <- read_csv("../data/ageb_censo_delitos_wifi.csv")
-
 ```
 
 ## Tidy Process
+
+Lo primero que haremos es observar la configuración y salud de nuestros datos
+para iniciar el proceso de limpieza y construcción de variables derivadas
+relevantes para nuestro análisis.
 
 ```{r}
 # *******   Preview of Dataset   *******
 ageb_censo_delitos_wifi <- database
 glimpse(ageb_censo_delitos_wifi)
+summary(ageb_censo_delitos_wifi)
+
 ```
 
 
@@ -88,18 +91,24 @@ nom_cols <- stri_enc_toutf8(nom_cols)
 
 colnames(ageb_censo_delitos_wifi) <- nom_cols
 
+
 # categorical columns
 v_cat <- c("nom_mun")
-ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>% mutate(across(v_cat, ~ as.factor(.x)))
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(across(all_of(v_cat), ~ as.factor(.x)))
 
 
 # Remove irrelevant columns: Quitamos la primera columna (índice) y
 # la variable NOM_ENT -> Ciudad de Méxi
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>% select(-1, -nom_ent)
 
-# Reemplazamos con 0 los nas de las columnas de delitos, NA -> no hubo delitos en esa ageb
+# Reemplazamos con 0 los NA's de las columnas:
+    # 1. Delitos, NA -> no hubo delitos en esa AGEB
+    # 2. Postes_wifi, NA -> no existen puntos de acceso a wifi en esa AGEB
+
 v_cat <- c(52:63)
-ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>% mutate(across(v_cat, ~ ifelse(is.na(.x)==TRUE,0,.x)))
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(across(all_of(v_cat), ~ ifelse(is.na(.x)==TRUE,0,.x)))
 
 # Corregimos los caracteres incorrectos en la vairiable nombre del municipio.
 ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
@@ -113,7 +122,7 @@ ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
 ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
   fct_relabel(~ gsub(" ", "_", .x))
 ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
-  fct_relabel( ~ str_replace_all(tolower(.x), pattern =" ", replacement = "a"))
+  fct_relabel( ~ str_replace_all(tolower(.x), pattern = "\\s", replacement = "a"))
 
 
 # Creamos la variable de poblacion que entre 15 y 24 años que no asiste a la escuela que faltaba
@@ -137,21 +146,99 @@ ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate(p_15a24_m = p_15a17_m + p_18a24_m)
 
 
-# Eliminamos las variables que ya no son necesarias
+# Eliminamos las variables que ya no son necesarias. Se valida que las variables
+# pop_15_24, pop_15_24_H contienen información duplicada con las nuevas var.
+
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   select(-p_15a17, -p_18a24, -p_15a17_m, -p_18a24_m, -p_15a17_f, -p_18a24_f,
-         -p15a17a, -p18a24a, -p15a17a_f, -p18a24a_f, -p15a17a_m, -p18a24a_m)
-
+         -p15a17a, -p18a24a, -p15a17a_f, -p18a24a_f, -p15a17a_m, -p18a24a_m,
+         -pop_15_24,-pop_15_24_h)
 
 # Relocate variables:
-# --> Pasamos Robo de vehículos al inicio de la base
+    # --> Pasamos Robo de vehículos al inicio de la base
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   relocate(robo_vehículos)
 
-# --> Pasamos Robo de vehículos al inicio de la base
+
+    # --> Movemos las variables de población con el resto de variables relacionadas
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   relocate(matches("^p15"), .before = pnacoe) %>%
-  relocate(matches("^p_15"), .after = pnacoe) 
+  relocate(matches("^p_15"), .before = pnacoe)
+
+# Creamos la variable de agrupación (al final del proceso de limpieza se explica la razón de esta variable.)
+    # Se Validó que la extracción de caracteres 3 al 9 de cvegeo y la concatenación
+    # de cve_mun_x con cve_loc_x fueran iguales (all TRUE). Se conserva script.
+
+    #table(ageb_censo_delitos_wifi %>% mutate(cadena1 = str_sub(cvegeo,3,9),
+    #                                   cadena2 = stri_join(cve_mun_x, cve_loc_x),
+    #                                   compare = cadena1==cadena2) %>%
+    #  relocate(cadena1, cadena2, compare) %>% pull(compare))
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(id_mun_loc = str_sub(cvegeo,3,9)) %>% 
+  relocate(id_mun_loc, .after = cvegeo)
+
+
+
+```
+
+
+En relación a las variables que indican el grado de desarrollo urbano:
+
+>vph_inter (internet), psinder (no afiliación serv. salud), vph_pisoti (piso tierra),
+vph_s_elec (no electricidad), vph_aguafv (no agua potable), vph_nodren (no drenaje)
+
+al observar alta presencia de NA's y 0's en las últimas cuatro variables, se
+concluye que al ser un análisis en la CDMX tienen poca o nula variabilidad
+pues, aunque si existen zonas marginadas, estas no son relevantes para nuestro
+análisis. Por esta razón se eliminarán.
+
+Por otro lado, las variables de servicios de internet y afiliación a servicios
+de salud, consideramos que sí podría existir cierto grado de relación con
+respecto al robo de vehículos.
+
+
+```{r}
+# Eliminamos las variables vph
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  select(-vph_pisoti, -vph_s_elec, -vph_aguafv, -vph_nodren)
+```
+
+
+Durante nuestra etapa de modelado, descubrimos que existen 17 AGEBS con POBTOT = 0
+y que esto se replica en todas las variables relacionadas a población. Al revisar
+la variable objetivo de estas observaciones, nos percatamos que se tienen varios
+registros con NA, veamos:
+
+```{r}
+database %>% filter(POBTOT == 0) %>% select(matches("^P|^Robo"))
+```
+
+por lo que podemos eliminar estos registros al no representar
+perdida de información siginificativa (17 de +2000)
+
+
+```{r}
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  filter(pobtot != 0)
+```
+
+
+Con el preprocesamiento anterior, se ejecutaron algunos modelos a nivel AGEB, donde
+uno de los principales hallazgos es que las observaciones (robo de vehículos)
+a este nivel son sumamente ralos, lo que dificulta un modelado adecuado.
+
+A este punto, revisamos la información y hemos decidido que la mejor forma de
+ejecutar nuestro análisis es a un nivel de abstración mayor, por lo que evaluaremos
+nuestros modelos a nivel municipio-localidad, el cuál agrupa un conjunto de AGEBS
+que consideramos nos puede dar una mejor resultado.
+
+Otro de los aspectos importantes a considerar es la recomendación de nuestro profesor
+sobre no estandarizar nuestras variables.
+
+
+Ahora revisamos nuestros datos posterior al proceso de limpieza.
+
+```{r}
 
 glimpse(ageb_censo_delitos_wifi)
 
@@ -161,81 +248,78 @@ colnames(ageb_censo_delitos_wifi)
 ```
 
 
+**Imputación NA's** Mediana en columnas numéricas distintas a matches("^robo")
 
-Imputamos con la mediana los nas del resto de las columnas
 
 ```{r}
-#columnas que se desea imputar valores centrales
-col_valor_central <- c(10:48,57)
-#imputacion por valor central
+
+#imputacion por valor central a variables numéricas que no son otros delitos
+col_valor_central <- c(11:41)
 ageb_censo_delitos_wifi <- imputar_valor_central(data.frame(ageb_censo_delitos_wifi), col_valor_central)
 
-```
-
-```{r}
-glimpse(ageb_censo_delitos_wifi)
-```
-
-```{r}
 summary(ageb_censo_delitos_wifi)
-```
-Estandarizamos columnas
-```{r}
 
-for (i in 9:57){
-  ageb_censo_delitos_wifi[,i] <- (ageb_censo_delitos_wifi[,i] - mean(ageb_censo_delitos_wifi[,i])) / sd(ageb_censo_delitos_wifi[,i])
-}
 ```
 
 
-```{r}
-ageb_censo_delitos_wifi$robo_vehículos <- (ageb_censo_delitos_wifi$robo_vehículos - mean(ageb_censo_delitos_wifi$robo_vehículos)) / sd(ageb_censo_delitos_wifi$robo_vehículos)
-```
 
 
-```{r}
-summary(ageb_censo_delitos_wifi)
-```
+--------------------------------------------------------------------------------
 
+## TRANSFORMACIONES EXPERT DOMAIN
 
-### Modelos con dummies y con bandas
+### Variables Dummy e integración variable presencia de bandas delincuenciales
+
+Integramos información relativa a las bandas que operan en las distintas alcaldías,
+con el objetivo de analizar el grado de influencia que representa la presencia
+de alguno de estos grupos delicitivos en la zona. Fuente:
 
 https://www.elfinanciero.com.mx/nacional/40-bandas-se-disputan-la-cdmx/
+
 ```{r}
-unique(ageb_censo_delitos_wifi$nom_mun)
+sort(unique(ageb_censo_delitos_wifi$nom_mun), decreasing = FALSE)
 ```
+
 LISTADO DE NOMBRE DE DELEGACIONES
 
-"alvaro_obregon", "tlalpan", "benito_ju rez",  "iztacalco",  "azcapotzalco", "venustiano_carranza", "tl huac", "gustavo_a_madero",
-"miguel_hidalgo", "xochimilco", "cuajimalpa_de_morelos", "la_magdalena_contreras", "milpa_alta", "cuauhtemoc", "coyoac n", "iztapalapa"
+"alvaro_obregon", "azcapotzalco", "benito_juarez", "coyoacan", "cuajimalpa_de_morelos",
+"cuauhtemoc", "gustavo_a_madero", "iztacalco", "iztapalapa", "la_magdalena_contreras",
+"miguel_hidalgo", "milpa_alta", "tlahuac", "tlalpan", "venustiano_carranza", "xochimilco"
 
 
-Bandas
+**Bandas**
+
+
+Nota para nosotros: si tenemos oportunidad, creamos una tabla relacional y creamos
+una sóla variable de grupo delicuencial y utilizamos la variable _dummy_ d
+_tidymodels_
+
+
 ```{r}
 
 # union_tepito
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( union_tepito = ifelse(
-    nom_mun %in% c("alvaro_obregon", "azcapotzalco", "benito_ju rez", "coyoac n",
+    nom_mun %in% c("alvaro_obregon", "azcapotzalco", "benito_juarez", "coyoacan",
                    "cuauhtemoc", "gustavo_a_madero", "iztacalco", "la_magdalena_contreras",
                    "miguel_hidalgo", "tlalpan", "venustiano_carranza"), 1, 0))
 
 #CJNG
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( cjng = ifelse(
-    nom_mun %in% c("alvaro_obregon", "benito_ju rez",  "cuajimalpa_de_morelos", 
+    nom_mun %in% c("alvaro_obregon", "benito_juarez",  "cuajimalpa_de_morelos", 
                    "cuauhtemoc", "gustavo_a_madero",  "iztapalapa", "tlalpan"), 1, 0))
 
 #cartel_de_tlahuac
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( cartel_de_tlahuac  = ifelse(
-    nom_mun %in% c("alvaro_obregon", "tl huac", "iztapalapa", "milpa_alta", "tlalpan", "xochimilco"), 1, 0))
+    nom_mun %in% c("alvaro_obregon", "tlahuac", "iztapalapa", "milpa_alta", "tlalpan", "xochimilco"), 1, 0))
 
 
 #lenin_canchola
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( lenin_canchola  = ifelse(
-    nom_mun %in% c("alvaro_obregon", "benito_ju rez", "la_magdalena_contreras", "miguel_hidalgo", "tlalpan"), 1, 0))
+    nom_mun %in% c("alvaro_obregon", "benito_juarez", "la_magdalena_contreras", "miguel_hidalgo", "tlalpan"), 1, 0))
 
 
 #anti_union_tepito
@@ -247,18 +331,240 @@ ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
 #rodolfos
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate( rodolfos  = ifelse(
-    nom_mun %in% c("alvaro_obregon", "coyoac n", "iztacalco", "milpa_alta", "tl huac", "xochimilco"), 1, 0))
+    nom_mun %in% c("alvaro_obregon", "coyoacan", "iztacalco", "milpa_alta", "tlahuac", "xochimilco"), 1, 0))
 
 
 ```
 
 
-## EDA
+
+**VARIABLES ASOCIADAS   ->   DELITOS**
+
+De forma intuitiva, podríamos pensar en agrupar las distintas variables de los
+delitos más representativos que tenemos por AGEB. Por esta razón, creamos dos
+variables que agrupan los siguientes delitos:
+
+```{r}
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(gpo_delitos1 = narcomenudeo + amenzas + fraude,
+         gpo_delitos2 = robo_objetos + robo_objetos_vehiculo +
+                              robo_transeunte + robo_accesorios_autos +
+                              robo_negocio_sin_violencia_autoservicio +
+                              robo_negocio_sin_violencia +
+                              robo_casa_sin_violencia) %>% 
+  relocate(gpo_delitos1, .before = postes_wifi) %>% 
+  relocate(gpo_delitos2, .before = postes_wifi) %>% 
+  select(-narcomenudeo, -amenzas, -fraude, -robo_objetos,
+         -robo_objetos_vehiculo, -robo_transeunte, -robo_accesorios_autos,
+         -robo_negocio_sin_violencia_autoservicio,
+         -robo_negocio_sin_violencia, -robo_casa_sin_violencia)
+
+```
+
+
+
+**VARIABLES ASOCIADAS   ->   POBLACIÓN Y VARIABLES RELATIVAS**
+
+La variable población total "pobtot" nos permite estimar las tasas al millar
+de las siguientes variables:
+
+  > "psinder"  población sin afiliación a servicios médicos.
+  > "p15ym_an" población analfabeta
+  > "pnacoe"   población nacida en otra entidad
+
+
+```{r}
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(tx1k_psinder = psinder/pobtot * 1000,
+         tx1k_p15ym_an = p15ym_an/pobtot * 1000,
+         tx1k_pnacoe = pnacoe/pobtot * 1000) %>%
+  relocate(starts_with("tx1k"), .before = pobtot) %>% 
+  select(-psinder, -p15ym_an, -pnacoe)
+```
+
+
+
+**VARIABLES ASOCIADAS   ->   ESCOLARIDAD**
+
+Población 15 - 24 años: "p_15a24", "p_15a24_f", "p_15a24_m"
+Población 15 - 24 años que asiste a la escuela: "p15a24a", "p15a24a_f", "p15a24a_m"
+Grado promedio de escolaridad: "graproes", "graproes_f", "graproes_m"
+
+Una de las hipótesis más fuertes que tenemos, a partir del conocimiento del
+experto, es que este tipo delitos son cometidos por personas entre los
+15 y 24 años de edad, por lo que se construyen dos variables.
+  
+  > tasa al millar de población 15-24 (utilizando POBTOT),
+  > tasa al millar de población 15-24 que asiste a la escuela,
+  > grado promedio de escolaridad de la población 15-130 AÑOS
+
+con el objetivo de determinar si estas variables son relevantes en nuestro
+análisis.
+
+Se tiene valores totales y por género; con el objetivo de mantener un modelo
+parsimonioso, se integran las variables generales y no por género. En caso
+requerido solo deberán realizarse los ajustes necesarios.
+
+
+```{r}
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(tx1k_p_15a24 = p_15a24/pobtot * 1000,
+         tx1k_p15a24a = p15a24a/p_15a24 * 1000) %>%
+  relocate(starts_with("tx1k_p"), .before = pobtot) %>%
+  relocate(ends_with("graproes"), .before = pobtot) %>%
+  select(-p_15a24, -p_15a24_f, -p_15a24_m,
+         -p15a24a, -p15a24a_f, -p15a24a_m,
+         -graproes_f, -graproes_m)
+```
+
+
+**VARIABLES ASOCIADAS   ->   POBLACIÓN ACTIVA**
+
+POBLACIÓN ECONOMICAMENTE ACTIVA: "pea", "pea_f", "pea_m"
+POBLACIÓN OCUPADA: "pocupada", "pocupada_f", "pocupada_m"
+POBLACIÓN DESOCUPADA: "pdesocup", "pdesocup_f", "pdesocup_m"
+
+En este caso, la hipótesis es que un alto índice de población económicamente
+activa (PEA) no está ocupada, por lo que sería probable que se incremente la
+incidencia de robo vehicular. Desechamos las variables por género (pues
+consideramos poco significativo su aporte) y de población ocupada (pues es el
+complemento de desocupada, correlación).
+
+  > tasa al millar de población PEA desocupada
+
+
+```{r}
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(tx1k_pea_pdesocup = pdesocup/pea * 1000) %>%
+  relocate(ends_with("pea_pdesocup"), .before = pobtot) %>%
+  select(-pea, -pea_f, -pea_m, -pocupada, -pocupada_f, -pocupada_m,
+         -pdesocup, -pdesocup_f, -pdesocup_m)
+```
+
+
+**VARIABLES ASOCIADAS   ->   HOGARES**
+
+Una de las características detectadas en las personas que han cometido algún
+delito, son los hogares disfuncionales, donde reiterativamente sólo se tiene
+la figura materna. Intemntaremos medir esto con las variables proporcionadas
+en el censo referente a hogares censales y hogares censales con persona de 
+referencia mujer (CAVEAT: no tenemos mayor información que nos permita entender
+la figura exacta de la mujer en esta unidad de análisis, por lo que podría ser
+que la variable no sea significativa)
+
+"tothog"      Total hogares censales
+"hogjef_f"    Total hogares censales persona de referencia mujer
+"pobhog"      Pobblación en hogares censales
+"phogjef_f"   Pobblación en hogares censales persona de referencia mujer
+
+
+
+```{r}
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(tx1k_hogjef_f = hogjef_f/tothog * 1000,
+         tx1k_phogjef_f = phogjef_f/pobhog * 1000) %>%
+  relocate(matches("tx1k_hogjef_f|tx1k_phogjef_f"), .before = pobtot) %>%
+  select(-tothog, -hogjef_f, -pobhog, -phogjef_f)
+```
+
+
+**VARIABLES ASOCIADAS   ->   VIVIENDAS PARTICULARES**
+
+La hipotésis aquí indica que en un lugar con alto índice de viviendas desocuodas
+tiende a incrementar la incidencia delictiva. Nons concentraremos únicamente
+en la tasa al millar de viviendas deshabitadas (vivtot-tvivhab).
+
+"vivtot"       total de viviendas
+"tvivhab"      total de viviendas habitadas
+"tvivparhab"   total de viviendas particulares habitadas
+"vivpar_des"   total de viviendas particulares deshabitadas
+
+
+Con relación a las siguientes dos variables, intuitivamente consideramos que
+una alta densidad por cuarto de vivienda así como la falta de acceso a internet
+puede estar relacionado con niveles altos de marginación de la población.
+Para evitar problemas de escalas, relativisamos "vph_inter" con respecto a
+viviendas particulares habitadas
+
+"pro_ocup_c"   promedio de ocupantes por cuarto en viviendas particulares ocupadas
+"vph_inter"    viviendas particulares que disponen de internet
+
+
+```{r}
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(tx1k_vivdes = (vivtot - tvivhab)/vivtot * 1000,
+         tx1k_vph_inter = vph_inter/tvivparhab * 1000) %>%
+  relocate(matches("tx1k_vivdes|tx1k_vph_inter"), .before = pobtot) %>%
+  relocate(starts_with("pro_ocup_c"), .before = pobtot) %>%
+  select(-vivtot, -tvivhab, -tvivparhab, -vivpar_des, -vph_inter)
+```
+
+
+
+**VARIABLES RELATIVAS**
+
+Una de las principales anotaciones que debemos considerar, es el hecho de que
+nuestra variable objetivo, _robo_vehículos_ que indica el número de vehículos
+robados en la AGEB durante el año de análisis, es sumamente rala, se concentra
+prácticamente todos los valores en 0 y 1 como podremos observar en el siguiente
+histograma:
+
+```{r}
+ggplot(ageb_censo_delitos_wifi, aes(x = robo_vehículos)) +
+  geom_histogram(bins = 37) + labs(title = "Fig. 3    Histograma de Variable Respuesta")
+```
+
+Por lo anterior, consideramos que esta variable debe ser relativa a la población
+observada en la AGEB, por lo que obtendremos una tasa de robo de vehiculos por
+cada 1,000 habitantes en la AGEB. Debemos recordar y discutir esta relación,
+pues un alto índice de la población carece de automóvil, por lo que sería más 
+razonable contar con una variable que indique el número de vehículos por AGEB o
+la variable complementaria de número de vehículos por cada 1,000 habitantes.
+
+Transformamos la variable obetivo:
+
+```{r}
+
+# Nuevo dataser con variables transformadas
+ageb_censo_delitos_wifi_t1 <- ageb_censo_delitos_wifi %>%
+  mutate(tasa_rob_veh = robo_vehículos/pobtot*1000) %>% relocate(tasa_rob_veh)
+
+ggplot(ageb_censo_delitos_wifi_t1, aes(y = tasa_rob_veh)) +
+  geom_boxplot() + labs(title = "Fig. 4    Distribución de la variable Tasa de
+                        Robo de Vehículos por cada mil hab.")
+```
+
+En este caso, algo en que no habíamos reparado previamente, era la alta incidencia
+de AGEBS con poca o nula población (derivado de posibles errores en la estimación
+elaborado por CENSO o simplemente por ser una zona altamente despoblada). Esto
+implicó tener que repensar cómo plantear nuestro modelo.
+
+Nuestro siguiente _approach_, lo definimos considerando una conclusión relevante en
+conjunto con nuestro profesor Felipe González, al tener muy poca varianza la
+variable respuesta (prácticamente se concentra en 0 y 1, ver Fig. 3), hemos
+decidido construir un análisis de clasificación binaria con presencia de robo
+de vehículos = 1 y sin robo de vehículos = 0.
+
+Transformar variable respuesta a binaria:
+
+```{r}
+
+# Nuevo dataset con variables transformadas
+ageb_censo_delitos_wifi_t2 <- ageb_censo_delitos_wifi %>%
+  mutate(robo_vehicular = ifelse(robo_vehículos>0, 1, 0)) %>% relocate(robo_vehicular)
+ageb_censo_delitos_wifi_t2
+
+```
+
+
+
+--------------------------------------------------------------------------------
+
+## GEDA
 Análisis bivariado
 ```{r}
 many_scatter_plots <- ManyPlots(df = dplyr::select_if(ageb_censo_delitos_wifi, is.numeric),tipo_grafica = ScatterPlot)
 many_scatter_plots
-
 ```
 
 
@@ -268,14 +574,74 @@ many_loess_plots <- ManyPlots(df = dplyr::select_if(ageb_censo_delitos_wifi,
 many_loess_plots
 ```
 
-## MODELO 1: 
 
+
+--------------------------------------------------------------------------------
+
+
+## MODELADO
+
+### Modelo 1: Aproximación lineal (no exitosa) 
+
+Nuestro primer "approach" es evaluar la relación del robo de vehículos con respecto
+a ciertos grupos de variables en la unidad de análisis (mun-loc):
+
+  * Tamaño de la población 15-24 años (por dominio de experto sabemos que es la
+  población que comete este tipo de delitos).
+  * Nivel de escolaridad de la población 15-24 años y grado promedio escolaridad
+  * Poblacion ocuopada
+  * PSINDER: personas sin servicio de salud
+  * phogjef_f: jefe referencia femenino
+  * Variables que muestran alguna característica de las viviendas particulares
+  * Variables que indican la presencia de otro tipo de delitos
+  * Cantidad de puntos de acceso a wifi
+
+#CAVEAT: revisar tan pronto como terminemos
+  
+Observemos que las variables que estamos utilizando pueden ser agregadas (suma),
+por lo que su agrupación es transparente y sin mayor complicación, excepto por 
+graproes (Grado promedio de escolaridad) y pro_ocup_c (promedio de ocupantes por
+cuato) las cuales momentaneamente la evaluaremos como promedio del
+promedio por AGEB
+
+Agrupamos al nivel de interés mun-loc y separamos nuestros datos en entrenamiento y prueba:
 
 ```{r}
+
+# Grouping variable mun-loc
+
+
+
+# ERASE WHEN DONE
+# sum(ifelse(is.na(ageb_censo_delitos_wifi$vph_s_elec)==TRUE,1,0))
+# ageb_censo_delitos_wifi %>% group_by(id_mun_loc) %>% 
+ # summarize(num_agebs = n(), sum(robo_vehículos), sum(vph_s_elec,na.rm = TRUE))
+
+
+
+data_modelado <- ageb_censo_delitos_wifi %>% group_by(id_mun_loc) %>% 
+  summarize(num_agebs = n(), robo_vehículos = sum(robo_vehículos), pop_15_24 = sum(pop_15_24),
+            p15ym_an = sum(p15ym_an), p15a24a = sum(p15a24a), graproes = mean(graproes),
+            pea = sum(pea), pocupada = sum(pocupada), pdesocup = sum(pdesocup),
+            psinder = sum(psinder), phogjef_f= sum(phogjef_f), vivpar_des = sum(vivpar_des),
+            pro_ocup_c = mean(pro_ocup_c), vph_pisoti = sum(vph_pisoti),
+            vph_s_elec = sum(vph_s_elec), vph_aguafv = sum(vph_aguafv), vph_nodren = sum(vph_nodren),
+            vph_inter = sum(vph_inter), amenzas = sum(amenzas), fraude = sum(fraude),
+            robo_objetos = sum(robo_objetos), robo_objetos_vehiculo = sum(robo_objetos_vehiculo),
+            robo_transeunte = sum(robo_transeunte), robo_accesorios_autos = sum(robo_accesorios_autos),
+            robo_negocio_sin_violencia_autoservicio = sum(robo_negocio_sin_violencia_autoservicio),
+            robo_negocio_sin_violencia = sum(robo_negocio_sin_violencia), narcomenudeo = sum(narcomenudeo),
+            robo_casa_sin_violencia = sum(robo_casa_sin_violencia), postes_wifi = sum(postes_wifi))
+  
+
+# Splitting our data
+
 set.seed(84351)
+
 robos_split <- initial_split(ageb_censo_delitos_wifi, prop = 0.75)
 robos_entrena <- training(robos_split)
 robos_prueba <- testing(robos_split)
+
 ```
 
 
@@ -343,7 +709,18 @@ mejor_modelo
 ```{r}
 modelo_final <- finalize_workflow(flujo_robos, mejor_modelo) %>%
   fit(robos_entrena)
+
+preds_tbl <- predict(modelo_final, testing(robos_split)) %>% 
+  bind_cols(testing(robos_split))
+ggplot(preds_tbl, aes(x = .pred, y = robo_vehículos)) +
+  geom_point() +
+  geom_abline(colour = "red") +
+  coord_obs_pred()
+
+
 ```
+
+
 
 ```{r}
 robos_receta_2 <- recipe(robo_vehículos ~
@@ -362,9 +739,9 @@ robos_receta_2 <- recipe(robo_vehículos ~
 
 
 ```{r}
-modelo_penalizado_2 <- linear_reg(mixture = 0, penalty = .6158482) %>%
+modelo_penalizado_2 <- linear_reg(mixture = 0, penalty = 0.1128838) %>%
   set_args(lambda.min_ratio = 1e-18) %>%
-  set_engine("glmnet")  
+  set_engine("glmnet")
 
 flujo_robos_2 <- workflow() %>% 
   add_recipe(robos_receta_2) %>% 
@@ -387,7 +764,7 @@ robos_prueba_normal <- testing(robos_split)
 
 
 ```{r}
-metricas(robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal)), 
+metricas(robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal)),
      truth = robo_vehículos, estimate = .pred) 
   #gt() %>% fmt_number(.estimate, decimals = 2)
 ```
@@ -397,6 +774,7 @@ robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal)) %>%
   ggplot(aes(x = .pred, y = robo_vehículos)) + geom_abline() + 
     geom_point(colour = "red") + coord_obs_pred()
 ```
+
 ```{r}
 ajuste %>% pull_workflow_fit() %>% broom::tidy() %>% 
   mutate(across(where(is.numeric), round, 3)) %>%
@@ -456,14 +834,14 @@ Cambiamos de doble to character
 ```{r}
 ageb_censo_delitos_wifi$union_tepito <- as.character(ageb_censo_delitos_wifi$union_tepito)
 ageb_censo_delitos_wifi$cjng <- as.character(ageb_censo_delitos_wifi$cjng)
-ageb_censo_delitos_wifi$cartel_de_tlahuac <- as.character(ageb_censo_delitos_wifi$ cartel_de_tlahuac)
-ageb_censo_delitos_wifi$lenin_canchola <- as.character(ageb_censo_delitos_wifi$ lenin_canchola)
-ageb_censo_delitos_wifi$anti_union_tepito <- as.character(ageb_censo_delitos_wifi$ anti_union_tepito)
+ageb_censo_delitos_wifi$cartel_de_tlahuac <- as.character(ageb_censo_delitos_wifi$cartel_de_tlahuac)
+ageb_censo_delitos_wifi$lenin_canchola <- as.character(ageb_censo_delitos_wifi$lenin_canchola)
+ageb_censo_delitos_wifi$anti_union_tepito <- as.character(ageb_censo_delitos_wifi$anti_union_tepito)
 ageb_censo_delitos_wifi$rodolfos <- as.character(ageb_censo_delitos_wifi$rodolfos)
 ```
 
 
-Bandas
+Ahora modelamos incluyendo las variables de Bandas delictivas.
 
 ```{r}
 
