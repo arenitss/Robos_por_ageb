@@ -33,12 +33,13 @@ Se emplearon dos modelos de aprendizaje de máquina: regresión lineal y regresi
 ├── data                 <- Bases de datos utilizadas para realizar el proyecto
 │
 ├── notebooks            <- Notebooks de R y Jupyter utilizados en la ejecución del proyecto
-│   ├── images                         <- Imágenes utilizadas en los notebooks
-│   ├── BD_reporte.Rmd                 <- Reporte de la descripción y utilización de las fuentes de bases de datos
-|   ├── Intro.Rmd                      <- Documento de introducción del proyecto
-|   ├── Modelos.Rmd                    <- Notebook de R con el procedimiento de implementación de los modelos
-|   ├── Verificando_datos.ipynb        <- Notebook de Jupyter con el procedimiento de manipulación de las bases de datos
-│   └── ajuste_param.Rmd               <- Notebook de ejemplo en R con un procedimiento ajuste de parámetros
+│   ├── images                            <- Imágenes utilizadas en los notebooks
+│   ├── BD_reporte.Rmd                    <- Reporte de la descripción y utilización de las fuentes de bases de datos
+|   ├── Intro.Rmd                         <- Documento de introducción del proyecto
+|   ├── ModProyFinal_ML_eq9@20211206.Rmd  <- Notebook de R con el procedimiento y códgio de implementación de los modelos
+|   ├── ModProyFinal_ML_eq9@20211206.html <- Reporte entrega proyecto.
+|   ├── Verificando_datos.ipynb           <- Notebook de Jupyter con el procedimiento de manipulación de las bases de datos
+│   └── ajuste_param.Rmd                  <- Notebook de ejemplo en R con un procedimiento ajuste de parámetros
 │
 ├── images             <- Imágenes utilizadas en el repositorio
 │
