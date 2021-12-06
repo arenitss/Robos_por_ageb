@@ -100,8 +100,11 @@ La base de datos está estructurada por AGEB, es decir, cada renglón contiene l
 
 Una vez que se han comparado todos los modelos podemos concluir, en primer, lugar que una regresión lineal dada la base rala con la que contamos no era un modelo adecuado. Asimismo, podemos afirmar que un modelo geoespacial hubiera sido más adecuado para nuestro propósito inicial, que era encontrar variables relacionadas con el robo de vehículos que permitieran la implementación de políticas públicas. Este modelo pudo haber integrado la ubicación de varios factores de riesgo como falta de alumbrado público, la ubicación de estacionamientos o zonas de estacionamiento con baja vigilancia. De la misma forma, nos hubiera dado la oportunidad de agrupar unidades geográficas vecinas con características similares.
 
-Dados estas restricciones, el problema se resolvió transformando la variable dependiente en una variable categórica binomial que permitiera predecir la existencia de al menos un robo en cada una de las unidades geográficas de la Ciudad de México. Con este modelo se obtuvo los siguientes resultados...
+Dadas estas restricciones, el problema se resolvió transformando la variable dependiente en una variable categórica binaria que permitiera predecir la existencia de al menos un robo en cada una de las unidades geográficas de la Ciudad de México. Con este modelo se obtuvo un accuracuy de .78 y una pérdida logística de .5. Lo que nos permite validar que sí existe una influencia de las variables propuestas en Modelo de Prevención.
 
+
+### Trabajos futuros
+Se puede considerar integrar un modelo geoespacial que permita encontrar variables relacionadas con el robo de vehículos  integrando la ubicación de varios factores de riesgo como falta de alumbrado público, la ubicación de estacionamientos o zonas de estacionamiento con baja vigilancia. De la misma forma,se puede integrar un análisis que permita agrupar unidades geográficas vecinas con características similares.
 
 1. Guillermo Valdés Castellanos.
  * Ex director del CISEN (2007-2011)
