@@ -86,7 +86,7 @@ La base de datos está estructurada por AGEB, es decir, cada renglón contiene l
   3. Amenzas. Número de delitos por AGEB (Datos CDMX)
   4. Fraude. Número de delitos por AGEB (Datos CDMX)
   5. Robo_Objetos. Número de delitos por AGEB (Datos CDMX)
-  6. Robo_Objetos_Vehiculo. Número de delitos por AGEB (Datos  .CDMX)
+  6. Robo_Objetos_Vehiculo. Número de delitos por AGEB (Datos CDMX)
   7. Robo_Transeunte. Número de delitos por AGEB (Datos CDMX)
   8. Robo_Accesorios_Autos. Número de delitos por AGEB (Datos CDMX)
   9. Robo_Negocio_Sin_Violencia_Autoservicio. Número de delitos por AGEB (Datos CDMX)
@@ -96,9 +96,13 @@ La base de datos está estructurada por AGEB, es decir, cada renglón contiene l
 
 ![](../images/Modelo2.png)
 
+## Conclusiones
+
+Una vez que se han comparado todos los modelos podemos concluir, en primer, lugar que una regresión lineal dada la base rala con la que contamos no era un modelo adecuado. Asimismo, podemos afirmar que un modelo geoespacial hubiera sido más adecuado para nuestro propósito inicial, que era encontrar variables relacionadas con el robo de vehículos que permitieran la implementación de políticas públicas. Este modelo pudo haber integrado la ubicación de varios factores de riesgo como falta de alumbrado público, la ubicación de estacionamientos o zonas de estacionamiento con baja vigilancia. De la misma forma, nos hubiera dado la oportunidad de agrupar unidades geográficas vecinas con características similares.
+
+Dados estas restricciones, el problema se resolvió transformando la variable dependiente en una variable categórica binomial que permitiera predecir la existencia de al menos un robo en cada una de las unidades geográficas de la Ciudad de México. Con este modelo se obtuvo los siguientes resultados...
 
 
-## Notas
 1. Guillermo Valdés Castellanos.
  * Ex director del CISEN (2007-2011)
  * Miembro del Consejo de Seguridad Nacional y del Gabinete de Seguridad Pública (2007-2011)
