@@ -235,6 +235,7 @@ summary(ageb_censo_delitos_wifi)
 ### LIMPIEZA
 ```{r}
 
+
 # cleaning column_name
 
 nom_cols <-  colnames (ageb_censo_delitos_wifi)
@@ -268,7 +269,7 @@ ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>% select(-1, -nom_ent)
 
 
-# Corregimos los caracteres incorrectos en la variable nombre del municipio.
+# Corregimos los caracteres incorrectos en la vairiable nombre del municipio.
 ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
   fct_relabel(~ gsub("µ", "a", .x))
 ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
@@ -283,7 +284,7 @@ ageb_censo_delitos_wifi$nom_mun <- ageb_censo_delitos_wifi$nom_mun %>%
   fct_relabel( ~ str_replace_all(tolower(.x), pattern = "\\s", replacement = "a"))
 
 
-# Creamos la variable de población que entre 15 y 24 años que no asiste a la escuela
+# Creamos la variable de poblacion que entre 15 y 24 años que no asiste a la escuela que faltaba
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate(p15a24a = p15a17a + p18a24a)
 
@@ -683,7 +684,7 @@ Transformamos la variable obetivo:
 
 ```{r}
 
-# Nuevo dataset con variables transformadas
+# Nuevo dataser con variables transformadas
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate(tasa_rob_veh = robo_vehículos/pobtot*1000) %>% relocate(tasa_rob_veh)
 
@@ -774,10 +775,13 @@ many_loess_plots
 
 --------------------------------------------------------------------------------
 
+
 ## MODELADO
 
-El modelado se basó en la relación del robo de vehículos con respecto
-a ciertos grupos de variables que a continuación se describen:
+### Modelo 1: Aproximación lineal (no exitosa) 
+
+Nuestro primer "approach" es evaluar la relación del robo de vehículos con respecto
+a ciertos grupos de variables en la unidad de análisis (mun-loc):
 
   * Tamaño de la población 15-24 años (por dominio de experto sabemos que es la
   población que comete este tipo de delitos).
@@ -789,21 +793,36 @@ a ciertos grupos de variables que a continuación se describen:
   * Variables que indican la presencia de otro tipo de delitos
   * Cantidad de puntos de acceso a wifi
 
+#CAVEAT: revisar tan pronto como terminemos
+  
+Observemos que las variables que estamos utilizando pueden ser agregadas (suma),
+por lo que su agrupación es transparente y sin mayor complicación, excepto por 
+graproes (Grado promedio de escolaridad) y pro_ocup_c (promedio de ocupantes por
+cuato) las cuales momentaneamente la evaluaremos como promedio del
+promedio por AGEB
 
-> Una de las ideas que intentamos explorar, dadas las características de nuestra
-variable respuesta (sumamente rala), era trabajar con un nivel de abstracción
-mayor a las AGEBS a partir de los datos disponibles. En este caso la unidad,
-de análisis municipio localidad "mun-loc" nos pareció útil, ya que sabíamos que las variables que
-estamos utilizando podían ser agregadas (suma), por lo que su agrupación es
-transparente y sin mayor complicación, excepto por graproes y pro_ocup_c.  
-Desafortunadamente, este pasó reduciría las observaciones de nuestros datos de 
-2300 a tan sólo 33. Como describimos más adelante, en una segunda etapa podría
-integrarse una agrupación de AGEBS por k vecinos más cercanos.
-
-
-### Splitting Data: separación en muestra y entrenamiento de nuestra base de datos ya preprocesada
+Agrupamos al nivel de interés mun-loc y separamos nuestros datos en entrenamiento y prueba:
 
 ```{r}
+
+# Grouping variable mun-loc
+
+data_modelado <- ageb_censo_delitos_wifi %>% group_by(id_mun_loc) %>% 
+  summarize(num_agebs = n(), robo_vehículos = sum(robo_vehículos), pop_15_24 = sum(pop_15_24),
+            p15ym_an = sum(p15ym_an), p15a24a = sum(p15a24a), graproes = mean(graproes),
+            pea = sum(pea), pocupada = sum(pocupada), pdesocup = sum(pdesocup),
+            psinder = sum(psinder), phogjef_f= sum(phogjef_f), vivpar_des = sum(vivpar_des),
+            pro_ocup_c = mean(pro_ocup_c), vph_pisoti = sum(vph_pisoti),
+            vph_s_elec = sum(vph_s_elec), vph_aguafv = sum(vph_aguafv), vph_nodren = sum(vph_nodren),
+            vph_inter = sum(vph_inter), amenzas = sum(amenzas), fraude = sum(fraude),
+            robo_objetos = sum(robo_objetos), robo_objetos_vehiculo = sum(robo_objetos_vehiculo),
+            robo_transeunte = sum(robo_transeunte), robo_accesorios_autos = sum(robo_accesorios_autos),
+            robo_negocio_sin_violencia_autoservicio = sum(robo_negocio_sin_violencia_autoservicio),
+            robo_negocio_sin_violencia = sum(robo_negocio_sin_violencia), narcomenudeo = sum(narcomenudeo),
+            robo_casa_sin_violencia = sum(robo_casa_sin_violencia), postes_wifi = sum(postes_wifi))
+
+
+# Splitting our data
 
 set.seed(84351)
 
@@ -812,32 +831,6 @@ robos_entrena <- training(robos_split)
 robos_prueba <- testing(robos_split)
 
 ```
-
-
-**NOTA:** Los modelos evaluados no consideran la variable _pobtot_ pues se
-relativisaron los variables relacionadas con población.
-
-
-### Modelo 1: Aproximación lineal (no exitosa)
-
-En nuestro primer intento, intentamos modelar la variable número de robo de
-vehículos por AGEB a través de un modelo lineal. Se realizaron diversos procesos
-en los datos con la intención de poder tener una "buena" explicación del fenómeno
-a través de las variables que definimos, pero el resultado no fue el esperado.
-
-Uno de los principales _insights_ es el hecho de que una alta concentración de
-la variable respuesta en valores 0 y 1 y el hecho de que existen aspectos
-geoespaciales no recogidos por las variables que teníamos disponibles en
-nuestros datos (las cuales son representativas de lls datos reales disponibles
-pues se usaron las categorías más ideales con base al conocimiento del_ expert
-domain_).
-
-Aprendimos de nuestros datos que a pesar de tener ideas intuitivas sobre el
-comportamiento esperados de nuestros datos, esto no implica una comportamiento
-lineal, si no que incluso probablemente existe aspectos en nuestra variable
-respuesta que no esta especificado y nos deificulta el poder obtener estimaciones
-razonables.
-
 
 
 ```{r}
@@ -859,11 +852,6 @@ flujo_robos <- workflow() %>%
   add_recipe(robos_receta) %>% 
   add_model(modelo_penalizado)
 ```
-
-
-Buscaremos evaluar nuestro modelo utilizando penalización que nos permita
-identificar aquellas variables que realmente están explicando parte del fenómeno
-de robo de vehículos.
 
 ```{r}
 val_split <- manual_rset(robos_split %>% list(), "validación")
@@ -892,7 +880,6 @@ ajustes_tbl
 ```
 
 
-
 ```{r}
 ggplot(ajustes_tbl, aes(x = penalty, y = .estimate, colour = mixture, group = mixture)) +
   geom_point() + geom_line() + scale_x_log10()
@@ -909,7 +896,7 @@ modelo_final <- finalize_workflow(flujo_robos, mejor_modelo) %>%
 
 preds_tbl <- predict(modelo_final, testing(robos_split)) %>% 
   bind_cols(testing(robos_split))
-ggplot(preds_tbl, aes(x = robo_vehículos, y = .pred)) +
+ggplot(preds_tbl, aes(x = .pred, y = robo_vehículos)) +
   geom_point() +
   geom_abline(colour = "red") +
   coord_obs_pred()
@@ -917,19 +904,101 @@ ggplot(preds_tbl, aes(x = robo_vehículos, y = .pred)) +
 
 ```
 
-**CONCLUSIONES:** nuestro modelo lineal para explicar el número de robo de
-vehículos en la ciudad de México utilizando variables como la incidencia de otros
-delitos en la CDMX, grados de escolaridad y proporción de personas 15-24 años
-que conocemos que usualmente, indicadores de desarrollo y saturación de viviendas,
-etc. no reflejan un comportamiento lineal.
-
-De igual forma se intentó considerar a través de una tasa de robo por cada 1,000
-habitantes y los resultados fueron similares.
 
 
-**Modelos integrando la presencia de bandas delincuenciales**
+```{r}
+robos_receta_2 <- recipe(robo_vehículos ~
+                         tx1k_psinder + tx1k_p15ym_an + tx1k_pnacoe +
+                         tx1k_p_15a24 + tx1k_p15a24a + graproes + 
+                         tx1k_pea_pdesocup + tx1k_hogjef_f + tx1k_phogjef_f +
+                         tx1k_vivdes + tx1k_vph_inter + pro_ocup_c +
+                         gpo_delitos1 + gpo_delitos2 + postes_wifi +
+                         union_tepito + cjng + cartel_de_tlahuac +
+                         lenin_canchola + anti_union_tepito +rodolfos,
+                       robos_entrena)
+```
 
 
+
+```{r}
+modelo_penalizado_2 <- linear_reg(mixture = 0, penalty = 0.1128838) %>%
+  set_args(lambda.min_ratio = 1e-18) %>%
+  set_engine("glmnet")
+
+flujo_robos_2 <- workflow() %>% 
+  add_recipe(robos_receta_2) %>% 
+  add_model(modelo_penalizado_2)
+```
+
+
+```{r}
+ajuste <- fit(flujo_robos_2, robos_entrena)
+```
+
+
+```{r}
+metricas <- metric_set(mape, mae, rmse, rsq)
+```
+
+```{r}
+robos_prueba_normal <- testing(robos_split) 
+```
+
+
+```{r}
+metricas(robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal)),
+     truth = robo_vehículos, estimate = .pred) 
+  #gt() %>% fmt_number(.estimate, decimals = 2)
+```
+
+```{r}
+robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal)) %>%
+  ggplot(aes(x = .pred, y = robo_vehículos)) + geom_abline() + 
+    geom_point(colour = "red") + coord_obs_pred() 
+```
+
+```{r}
+ajuste %>% pull_workflow_fit() %>% broom::tidy() %>% 
+  mutate(across(where(is.numeric), round, 3)) %>%
+  select(term, estimate) %>% 
+  gt()
+```
+
+
+```{r}
+regresion = lm(robo_vehículos ~
+                         tx1k_psinder + tx1k_p15ym_an + tx1k_pnacoe +
+                         tx1k_p_15a24 + tx1k_p15a24a + graproes + 
+                         tx1k_pea_pdesocup + tx1k_hogjef_f + tx1k_phogjef_f +
+                         tx1k_vivdes + tx1k_vph_inter + pro_ocup_c +
+                         gpo_delitos1 + gpo_delitos2 + postes_wifi +
+                         union_tepito + cjng + cartel_de_tlahuac +
+                         lenin_canchola + anti_union_tepito +rodolfos,
+                       robos_entrena) #Create the linear regression
+
+summary(regresion) #Review the results
+```
+### IMPORTANCIA
+
+```{r}
+rf <- ranger(robo_vehículos ~
+                         tx1k_psinder + tx1k_p15ym_an + tx1k_pnacoe +
+                         tx1k_p_15a24 + tx1k_p15a24a + graproes + 
+                         tx1k_pea_pdesocup + tx1k_hogjef_f + tx1k_phogjef_f +
+                         tx1k_vivdes + tx1k_vph_inter + pro_ocup_c +
+                         gpo_delitos1 + gpo_delitos2 + postes_wifi +
+                         union_tepito + cjng + cartel_de_tlahuac +
+                         lenin_canchola + anti_union_tepito + rodolfos,
+    data = robos_entrena, importance = "permutation")
+```
+
+```{r}
+importancia <- importance(rf)
+importancia %>% as.data.frame(importancia) %>% rownames_to_column("variable") %>% 
+  arrange(desc(.))
+```
+
+Modelos con dummies y con bandas
 https://www.elfinanciero.com.mx/nacional/40-bandas-se-disputan-la-cdmx/
 ```{r}
 unique(ageb_censo_delitos_wifi$nom_mun)
@@ -950,94 +1019,27 @@ ageb_censo_delitos_wifi$rodolfos <- as.character(ageb_censo_delitos_wifi$rodolfo
 ```
 
 
-Ahora utilizaremos una **regularización Lasso** para obtener determinar cuales
-variables podrían explicar de mejor forma nuestro modelo y de igual forma validar
-nuevamente que nuestros datos no son lineales:
-
-
-```{r}
-robos_receta_2 <- recipe(robo_vehículos ~
-                         tx1k_psinder + tx1k_p15ym_an + tx1k_pnacoe +
-                         tx1k_p_15a24 + tx1k_p15a24a + graproes + 
-                         tx1k_pea_pdesocup + tx1k_hogjef_f + tx1k_phogjef_f +
-                         tx1k_vivdes + tx1k_vph_inter + pro_ocup_c +
-                         gpo_delitos1 + gpo_delitos2 + postes_wifi +
-                         union_tepito + cjng + cartel_de_tlahuac +
-                         lenin_canchola + anti_union_tepito + rodolfos,
-                       robos_entrena)
-```
-
-
-
-```{r}
-modelo_penalizado_2 <- linear_reg(mixture = 1, penalty = 0) %>%
-  set_engine("glmnet", lambda.min.ratio = 1e-17)
-
-flujo_robos_2 <- workflow() %>% 
-  add_recipe(robos_receta_2) %>% 
-  add_model(modelo_penalizado_2)
-```
-
+Ahora modelamos incluyendo las variables de Bandas delictivas.
 
 ```{r}
 
-
-flujo_robos_2 <- flujo_robos_2 %>% fit(robos_entrena) 
-
-modelo_penalizado_2 <- extract_fit_parsnip(flujo_robos_2)
-
-coefs <- modelo_penalizado_2 %>% pluck("fit") %>% tidy() %>%
-  filter(term != "(Intercept)")
-
-ggplot(coefs, aes(x = lambda, y = estimate, colour = term)) +
-  geom_line(size = 1.4) + scale_x_log10() +
-  #scale_colour_manual(values = cbb_palette) +
-  labs(subtitle = "Regularizacion L1, ")
-
-
-ajuste <- fit(flujo_robos_2, robos_entrena)
-```
-
-
-```{r}
-
-coefs %>% filter(step == 21) %>% select(term, estimate, lambda)
+robos_receta_3 <- recipe(robo_vehículos ~
+                           pop_15_24 + p15ym_an + p15a24a + graproes + pea +
+                           pocupada + pdesocup + psinder + phogjef_f + vivpar_des +
+                           pro_ocup_c + vph_pisoti + vph_s_elec + vph_aguafv + vph_nodren +
+                           vph_inter + amenzas + fraude + robo_objetos +
+                           robo_objetos_vehiculo +
+                           robo_transeunte + robo_accesorios_autos +
+                           robo_negocio_sin_violencia_autoservicio  +
+                           robo_negocio_sin_violencia + narcomenudeo +
+                           robo_casa_sin_violencia + postes_wifi +
+                           union_tepito + cjng + cartel_de_tlahuac +
+                           lenin_canchola + anti_union_tepito + rodolfos,
+                         robos_entrena)
 
 ```
 
 
-Es importante notar como esta regularización nos muestra que variables importantes
-en el modelo son la presencia de otros delitos y los postes wifi. En el caso de
-los postes wifi, es altamente probable que exista una correlación por la alta
-concentración de robos en zonas cercanas, esto es, probablemente existe algún 
-elemento relacionado que no detectan nuestros datos, pues sería contratintuitivo
-que la presencia de postes wifi incrementa el robo de vehículos.
-
-
-## IMPORTANCIA DE VARIABLES
-
-Nuestro objetivo es determinar de todas las variables que tenemos preprocesadas
-para nuestro modelo cuales realmente reflejan un mayor grado de explicabilidad
-del fenómeno analizado:
-
-```{r}
-rf <- ranger(robo_vehículos ~
-                         tx1k_psinder + tx1k_p15ym_an + tx1k_pnacoe +
-                         tx1k_p_15a24 + tx1k_p15a24a + graproes + 
-                         tx1k_pea_pdesocup + tx1k_hogjef_f + tx1k_phogjef_f +
-                         tx1k_vivdes + tx1k_vph_inter + pro_ocup_c +
-                         gpo_delitos1 + gpo_delitos2 + postes_wifi,
-    data = robos_entrena, importance = "permutation")
-```
-
-```{r}
-importancia <- importance(rf)
-importancia %>% as.data.frame(importancia) %>% rownames_to_column("variable") %>% 
-  arrange(desc(.))
-```
-
-De forma similar a la regularización Lasso, nos uestra que la presencia de otros
-delitos en la zona está relacionado con la incidencia del robo de vehículos.
 
 
 # MODELO 3: Regresión Logística, un muy buen resultado.
@@ -1106,76 +1108,19 @@ metricas(preds_prueba, truth = robo_vehicular, .pred_Yes, estimate = .pred_class
 ```
 
 
-
-```{r}
-
-proba_mod <- predict(flujo_ajustado, robos_prueba, type = "prob")
-
-dat_calibracion <- tibble(obs = robos_prueba %>% pull(robo_vehicular), 
-                          probabilidad = proba_mod$.pred_Yes) %>% 
-    mutate(y = ifelse(obs == "Yes", 1, 0))
-
-dat_calibracion %>%  head() %>% gt()
-
-ggplot(dat_calibracion, aes(x = probabilidad, y = y)) +
-  geom_jitter(width = 0, height = 0.02, alpha = 0.2) +
-  geom_smooth(method = "loess", span = 0.7, colour = "red", se = FALSE) +
-  geom_abline() +
-  coord_equal() +
-  labs(title = "Proporción 0's y 1's vs Estimación")
-  
-
-```
-
-En el gráfico anterior, observamos un podo de dificultad en las probabilidades
-de 0 a 0.4 por la baja cantidad de información que se tiene en tales puntos.
-
-**Calibración binaria**
-
-Ahora vamos a crear intervalos de credibilidad para analizar la consistencia 
-en las probabilidades de clase:
-
-```{r}
-calibracion_gpos <- dat_calibracion %>% 
-    mutate(proba_grupo = cut(probabilidad, 
-      quantile(probabilidad, seq(0, 1, 0.1)), include.lowest = TRUE)) %>% 
-    group_by(proba_grupo) %>% 
-    summarise(prob_media = mean(probabilidad), 
-              n = n(),
-              obs = sum(y), .groups = "drop") %>% 
-    mutate(obs_prop = (obs + 1) / (n + 2), 
-           inferior = qbeta(0.05, obs + 1,  n - obs + 2),
-           superior = qbeta(0.95, obs + 1,  n - obs + 2))
-calibracion_gpos |> gt() |> fmt_number(where(is_double), decimals = 3)
-
-```
-
-```{r}
-ggplot(calibracion_gpos, 
-  aes(x = prob_media, y = obs_prop, ymin = inferior, ymax = superior)) +
-    geom_abline() +
-    geom_linerange(color = "steelblue") +
-    geom_point(colour = "red") + coord_equal() +
-  xlab("Probabilidad de clase") +
-  ylab("Proporción observada") +
-  labs(subtitle = "Intervalos de 90% para prop observada")
-```
-Finalmente, observamos que la baja cantidad de observaciones nos causa problemas
-en las probabilidades de 0 a 0.4 como habíamos visto en el gráfico anterior. A
-pesar de esto, es notable observar que al menos todos nuesros intervalos tocan
-la predicción (aunque no con mucha precision).
-
-
-
-
-
-
 ## Conclusiones
 
-Una vez que se han comparado todos los modelos podemos concluir, en primer, lugar que una regresión lineal dada la base rala con la que contamos no era un modelo adecuado. Asimismo, podemos afirmar que un modelo geoespacial hubiera sido más adecuado para nuestro propósito inicial, que era encontrar variables relacionadas con el robo de vehículos que permitieran la implementación de políticas públicas. Este modelo pudo haber integrado la ubicación de varios factores de riesgo como falta de alumbrado público, la ubicación de estacionamientos o zonas de estacionamiento con baja vigilancia. De la misma forma, nos hubiera dado la oportunidad de agrupar unidades geográficas vecinas con características similares.
+Una vez que se han comparado todos los modelos podemos concluir, en primer, lugar que una regresión lineal dada la base rala con la que contamos no era un modelo adecuado. Por tanto, el problema se resolvió transformando la variable dependiente en una variable categórica binaria que permitiera predecir la existencia de al menos un robo en cada una de las unidades geográficas de la Ciudad de México. Con este modelo se obtuvo un accuracy de .78 y una pérdida logística de .5. Lo que nos permite validar que sí existe una influencia de las variables propuestas en Modelo de Prevención.
 
-Dadas estas restricciones, el problema se resolvió transformando la variable dependiente en una variable categórica binaria que permitiera predecir la existencia de al menos un robo en cada una de las unidades geográficas de la Ciudad de México. Con este modelo se obtuvo un accuracuy de .78 y una pérdida logística de .5. Lo que nos permite validar que sí existe una influencia de las variables propuestas en Modelo de Prevención.
+Con relación a algunos de los factores de riesgo de contexto como la incidencia de otros delitos el modelo indica que en un lugar dado se cometerán robos de vehículos si se presentan otros tipos de despojos, así como, fraudes, amenazas y narcomenudeo. Cabe señalar, que estos tipos de delitos son cometidos por el mismo tipo de actor delictivo (bandas y pandillas) y son propios de zonas urbanas.
 
+Por otro lado este ejercicio muestra que la presencia de un mayor número de postes de internet y acceso a este servicio está relacionado con un mayor número de robos. Creemos que este resultado está capturando el hecho de que entre más urbanización tenemos mayor es el número de este tipo de delitos.
+
+Respecto a la población delictiva potencial que son los jóvenes de entre 15 y 24 años el modelo muestra que entre  mayor sea el número de éstos, menor es la incidencia,  pero si este grupo de jóvenes asiste a la escuela mayor es el número de robos. Esta relación, no es fácil de interpretar. 
+
+Respecto a las variables estructurales que resultaron de mayor importancia fueron: grado de escolaridad y tasa de población desocupada de la PEA, que coincide con la hipótesis plateada
+
+Por otro lado no resultaron importantes las variables relacionadas con poblaciones delictivas reales, presencia de bandas conocidas; como tampoco factores de riesgo sociales, como mayor proporción de hogares monoparentales.
 
 ### Trabajos futuros
 Se puede considerar integrar un modelo geoespacial que permita encontrar variables relacionadas con el robo de vehículos  integrando la ubicación de varios factores de riesgo como falta de alumbrado público, la ubicación de estacionamientos o zonas de estacionamiento con baja vigilancia. De la misma forma,se puede integrar un análisis que permita agrupar unidades geográficas vecinas con características similares.
