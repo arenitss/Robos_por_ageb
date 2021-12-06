@@ -1,5 +1,14 @@
-# Proyecto final de Aprendizaje de Máquina
-Predicción de número de robos de vehículos por ageb en la Ciudad de México
+<p align = "center">
+    <img src="images/logo_itam.png" width="300" height="110" />
+
+## <p align = "center"> Maestría en Ciencia de Datos
+
+## <p align = "center"> Aprendizaje de Máquina (Otoño 2021)
+
+---
+  
+# Proyecto final: Predicción de número de robos de vehículos por AGEB en la Ciudad de México
+
 **Integrantes del equipo**  
 
 | Nombre                          |     CU   | Mail                    | Usuario Gh                                    |
