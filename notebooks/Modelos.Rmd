@@ -1,6 +1,6 @@
 ---
 title: "EDA. Incidencia Delictiva por AGEB"
-author: "AM_NAYELLI XXX, RD_URIEL ABRAHAM XXX, ZC_JOSE LUIS R. 183347"
+author: "AM_NAYELLI 84351, RD_URIEL ABRAHAM 193921, ZC_JOSE LUIS R. 183347"
 date: "06/11/2021"
 output: html_document
 ---
@@ -28,20 +28,11 @@ instalar <- function(paquete) {
 paquetes <- c("tensorflow", "keras", "tidyverse","stringi",
               "tidymodels", "glmnet", "kknn","gt","ranger")
 
-# c("gridExtra", 'ggthemes','GGally','mice','VIM')
-
 invisible(lapply(paquetes, instalar))
 
 ## Load piping files and review of working libraries
 
-#source("../src/etl/metadata.R"  , encoding = 'UTF-8')
 source("../src/utils/utils.R", encoding = 'UTF-8')
-#source("../src/etl/00-load.R", encoding = 'UTF-8')
-#source("../src/etl/01-prepare.R", encoding = 'UTF-8')
-#ource("../src/etl/02-clean.R", encoding = 'UTF-8')
-#source("../src/etl/03-eda.R", encoding = 'UTF-8')
-#source("../src/etl/ggbiplot.R",   encoding = 'UTF-8')
-
 
 ```
 
@@ -542,19 +533,26 @@ de AGEBS con poca o nula población (derivado de posibles errores en la estimaci
 elaborado por CENSO o simplemente por ser una zona altamente despoblada). Esto
 implicó tener que repensar cómo plantear nuestro modelo.
 
+
 Nuestro siguiente _approach_, lo definimos considerando una conclusión relevante en
 conjunto con nuestro profesor Felipe González, al tener muy poca varianza la
 variable respuesta (prácticamente se concentra en 0 y 1, ver Fig. 3), hemos
 decidido construir un análisis de clasificación binaria con presencia de robo
-de vehículos = 1 y sin robo de vehículos = 0.
+de vehículos = Yes y sin robo de vehículos = No.
 
-Transformar variable respuesta a binaria:
+Transformar variable respuesta a factor binario:
 
 ```{r}
 
 # Nuevo dataset con variables transformadas
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
-  mutate(robo_vehicular = ifelse(robo_vehículos>0, 1, 0)) %>% relocate(robo_vehicular)
+  mutate(robo_vehicular = ifelse(robo_vehículos>0, "Yes", "No")) %>% relocate(robo_vehicular)
+
+# categorical columns
+v_cat <- c("robo_vehicular")
+ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
+  mutate(across(all_of(v_cat), ~ as.factor(.x)))
+
 
 summary(ageb_censo_delitos_wifi)
 colnames(ageb_censo_delitos_wifi)
@@ -577,7 +575,7 @@ se imputaran con la mediana: 756.7
 
 ```{r}
 
-v_cat <- c(1:3, 12:22)
+v_cat <- c(2:3, 12:22)
 ageb_censo_delitos_wifi <- ageb_censo_delitos_wifi %>%
   mutate(across(all_of(v_cat), ~ ifelse(is.na(.x)==TRUE,0,.x)),
          across(all_of(v_cat), ~ ifelse(is.infinite(.x)==TRUE,0,.x)))
@@ -644,15 +642,6 @@ Agrupamos al nivel de interés mun-loc y separamos nuestros datos en entrenamien
 
 # Grouping variable mun-loc
 
-
-
-# ERASE WHEN DONE
-# sum(ifelse(is.na(ageb_censo_delitos_wifi$vph_s_elec)==TRUE,1,0))
-# ageb_censo_delitos_wifi %>% group_by(id_mun_loc) %>% 
- # summarize(num_agebs = n(), sum(robo_vehículos), sum(vph_s_elec,na.rm = TRUE))
-
-
-
 data_modelado <- ageb_censo_delitos_wifi %>% group_by(id_mun_loc) %>% 
   summarize(num_agebs = n(), robo_vehículos = sum(robo_vehículos), pop_15_24 = sum(pop_15_24),
             p15ym_an = sum(p15ym_an), p15a24a = sum(p15a24a), graproes = mean(graproes),
@@ -667,13 +656,6 @@ data_modelado <- ageb_censo_delitos_wifi %>% group_by(id_mun_loc) %>%
             robo_negocio_sin_violencia = sum(robo_negocio_sin_violencia), narcomenudeo = sum(narcomenudeo),
             robo_casa_sin_violencia = sum(robo_casa_sin_violencia), postes_wifi = sum(postes_wifi))
 
- [1] "robo_vehicular"    "tasa_rob_veh"      "robo_vehículos"    "cvegeo"            "id_mun_loc"        "cve_ent_x"        
- [7] "cve_mun_x"         "cve_loc_x"         "cve_ageb_x"        "geometry"          "nom_mun"           "tx1k_psinder"     
-[13] "tx1k_p15ym_an"     "tx1k_pnacoe"       "tx1k_p_15a24"      "tx1k_p15a24a"      "graproes"          "tx1k_pea_pdesocup"
-[19] "tx1k_hogjef_f"     "tx1k_phogjef_f"    "tx1k_vivdes"       "tx1k_vph_inter"    "pro_ocup_c"        "pobtot"           
-[25] "gpo_delitos1"      "gpo_delitos2"      "postes_wifi"       "union_tepito"      "cjng"              "cartel_de_tlahuac"
-[31] "lenin_canchola"    "anti_union_tepito" "rodolfos"
-  
 
 # Splitting our data
 
@@ -807,7 +789,7 @@ metricas(robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal))
 ```{r}
 robos_prueba_normal %>% bind_cols(predict(ajuste, robos_prueba_normal)) %>%
   ggplot(aes(x = .pred, y = robo_vehículos)) + geom_abline() + 
-    geom_point(colour = "red") + coord_obs_pred()
+    geom_point(colour = "red") + coord_obs_pred() 
 ```
 
 ```{r}
@@ -891,4 +873,107 @@ robos_receta_3 <- recipe(robo_vehículos ~
                          robos_entrena)
 
 ```
+
+
+
+
+# MODELO 3: Regresión Logística, un muy buen resultado.
+
+Vamos a dar un cambio de dirección y utilizaremos nuestra variable binaria
+robo_vehicular = {0: No hay incidencia y 1: incidencia de 1 o más robos}
+y en nuestro primer _approach_ intentaremos con una regresión logística:
+
+**LOGISTIC REGRESSIÓN MODEL**
+
+
+ [1] "robo_vehicular"    "tasa_rob_veh"      "robo_vehículos"    "cvegeo"            "id_mun_loc"        "cve_ent_x"        
+ [7] "cve_mun_x"         "cve_loc_x"         "cve_ageb_x"        "geometry"          "nom_mun"           "tx1k_psinder"     
+[13] "tx1k_p15ym_an"     "tx1k_pnacoe"       "tx1k_p_15a24"      "tx1k_p15a24a"      "graproes"          "tx1k_pea_pdesocup"
+[19] "tx1k_hogjef_f"     "tx1k_phogjef_f"    "tx1k_vivdes"       "tx1k_vph_inter"    "pro_ocup_c"        "pobtot"           
+[25] "gpo_delitos1"      "gpo_delitos2"      "postes_wifi"       "union_tepito"      "cjng"              "cartel_de_tlahuac"
+[31] "lenin_canchola"    "anti_union_tepito" "rodolfos"
+
+
+```{r}
+recipe_robovehi1 <- recipe(robo_vehicular ~
+                            tx1k_psinder + tx1k_p15ym_an + tx1k_pnacoe +
+                            tx1k_p_15a24 + tx1k_p15a24a + graproes +
+                            tx1k_pea_pdesocup + tx1k_hogjef_f + tx1k_phogjef_f +
+                            tx1k_vivdes + tx1k_vph_inter + pro_ocup_c +
+                            gpo_delitos1 + gpo_delitos2 + postes_wifi +
+                            union_tepito + cjng + cartel_de_tlahuac +
+                            lenin_canchola + anti_union_tepito +rodolfos,
+                            robos_entrena)
+
+rvehi1_ent_s <- recipe_robovehi1 %>%  prep() %>%  juice() 
+rvehi1_pr_s <- recipe_robovehi1 %>%  prep() %>%  bake(robos_prueba)
+
+```
+
+
+```{r}
+modelo_lineal <- logistic_reg(mode = "classification") %>% 
+  set_engine("glm")
+flujo_robovehi1 <- workflow() %>% 
+  add_model(modelo_lineal) %>% 
+  add_recipe(recipe_robovehi1)
+flujo_ajustado <- fit(flujo_robovehi1, robos_entrena)
+#saveRDS(flujo_ajustado, "cache/flujo_ajustado_diabetes.rds")
+flujo_ajustado
+```
+
+
+```{r}
+preds_prueba <- 
+  predict(flujo_ajustado, robos_prueba, type= "prob") %>% 
+  bind_cols(predict(flujo_ajustado,  robos_prueba)) %>% 
+  bind_cols( robos_prueba %>% select(robo_vehicular))
+preds_prueba
+```
+
+```{r}
+levels(preds_prueba$robo_vehicular)
+```
+
+
+```{r}
+metricas <- metric_set(accuracy, mn_log_loss)
+metricas(preds_prueba, truth = robo_vehicular, .pred_Yes, estimate = .pred_class, 
+         event_level = "second")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
